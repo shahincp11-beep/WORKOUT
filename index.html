@@ -75,25 +75,20 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   --label:#f5f5f7;--label2:rgba(245,245,247,.6);--label3:rgba(245,245,247,.3);--sep:rgba(255,255,255,.09);
   --bar:rgba(14,14,16,.55);--barline:rgba(255,255,255,.1);--band:rgba(10,10,11,.55);--menu:rgba(38,38,42,.72);--septhick:rgba(0,0,0,.3);
   --red:#ff453a;--blue:#0a84ff;--orange:#ff9f0a;--green:#30d158;--mint:#63e6e2;--purple:#bf5af2;--pink:#ff375f;--indigo:#5e5ce6;--cyan:#64d2ff;--yellow:#ffd60a;
-  --tint:#f5f5f7;--ontint:#0a0a0b;--ring2:rgba(245,245,247,.72);--ring3:rgba(245,245,247,.42);
+  --tint:var(--day);--ontint:#ffffff;--ring2:var(--mint);--ring3:var(--purple);
   color-scheme:dark}
 .wall{display:none;position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(120% 55% at 50% -12%,rgba(255,255,255,.13),transparent 62%),
-    radial-gradient(90% 45% at 50% 115%,rgba(255,255,255,.05),transparent 70%),
-    linear-gradient(180deg,#161618 0%,#0b0b0c 55%,#080809 100%)}
+  background:radial-gradient(115% 52% at 50% -14%,color-mix(in srgb,var(--day) 38%,transparent),transparent 66%),
+    radial-gradient(70% 38% at 100% 62%,color-mix(in srgb,var(--day) 9%,transparent),transparent 70%),
+    radial-gradient(90% 40% at 50% 112%,color-mix(in srgb,var(--day) 14%,transparent),transparent 70%),
+    linear-gradient(180deg,#151517 0%,#0b0b0c 55%,#08080a 100%);transition:background .4s}
 :root[data-look="glass"] .wall{display:block}
 :root[data-look="glass"] .group,:root[data-look="glass"] .ex,:root[data-look="glass"] .summary{
   -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
   box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08)}
-:root[data-look="glass"] nav button.on{color:var(--label)}
-:root[data-look="glass"] .itile{background:rgba(255,255,255,.08)!important;color:var(--label);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12)}
-:root[data-look="glass"] .pill{background:rgba(255,255,255,.08);color:var(--label)}
+:root[data-look="glass"] .itile{background:color-mix(in srgb,var(--ic) 22%,transparent);color:var(--ic);box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--ic) 40%,transparent)}
 :root[data-look="glass"] .tt.r{color:var(--label2)}
-:root[data-look="glass"] .ok{color:var(--label)}
-:root[data-look="glass"] .ex.done .tile,:root[data-look="glass"] .addc.in{color:var(--tint)}
-:root[data-look="glass"] .ex.done .tile{background:var(--tint);color:var(--ontint)}
-:root[data-look="glass"] .play.soft{background:rgba(255,255,255,.08)}
-:root[data-look="glass"] .chip.hit{background:rgba(255,255,255,.08);color:var(--label)}
+:root[data-look="glass"] .tile,:root[data-look="glass"] .set.on,:root[data-look="glass"] .big{box-shadow:0 4px 18px color-mix(in srgb,var(--tint) 35%,transparent)}
 :root[data-look="glass"] .lt{font-weight:600;letter-spacing:.005em}
 :root[data-look="glass"] .sheet{-webkit-backdrop-filter:blur(40px) saturate(170%);backdrop-filter:blur(40px) saturate(170%)}
 :root[data-look="glass"] .sheet .group{-webkit-backdrop-filter:none;backdrop-filter:none}
@@ -215,7 +210,7 @@ button.cell:active,label.cell:active{background:var(--fill3)}
 
 /* habit rows */
 .hab{--inset:58px}
-.itile{flex:none;width:30px;height:30px;border-radius:7px;display:grid;place-content:center;color:#fff}
+.itile{flex:none;width:30px;height:30px;border-radius:7px;display:grid;place-content:center;color:#fff;background:var(--ic)}
 .itile svg{width:18px;height:18px}
 .tick{flex:none;color:var(--tint);opacity:0;transition:opacity .15s}
 .tick svg{width:20px;height:20px}
@@ -307,8 +302,8 @@ nav button.on{color:var(--c)}
 .mini i:first-child{width:62%;height:7px;margin-bottom:3px;border-radius:2px}
 .mini.light{background:#f2f2f7}.mini.light i{background:#ffffff}.mini.light i:first-child{background:#1c1c1e}
 .mini.dark{background:#000000}.mini.dark i{background:#2c2c2e}.mini.dark i:first-child{background:#ffffff}
-.mini.glass{background:radial-gradient(130% 55% at 50% -10%,rgba(255,255,255,.2),transparent 65%),linear-gradient(180deg,#1a1a1c,#09090a)}
-.mini.glass i{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16)}.mini.glass i:first-child{background:#f5f5f7;box-shadow:none}
+.mini.glass{background:radial-gradient(140% 55% at 50% -12%,rgba(255,69,58,.55),transparent 66%),linear-gradient(180deg,#1a1a1c,#09090a)}
+.mini.glass i{background:rgba(255,255,255,.09);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16)}.mini.glass i:first-child{background:#f5f5f7;box-shadow:none}
 .look.on .mini{box-shadow:0 0 0 2.5px var(--tint),0 2px 10px rgba(0,0,0,.14)}
 .lk-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--label3);display:grid;place-content:center;color:var(--ontint)}
 .lk-check svg{width:13px;height:13px;opacity:0}
@@ -606,7 +601,7 @@ function renderGoals(){
   $("legend").innerHTML=[["Workout",`${done}<small>/${total} SETS</small>`,"--tint"],["Cardio",`${cardio}<small>/150 MIN</small>`,"--ring2"],["Habits",`${n}<small>/${HABITS.length}</small>`,"--ring3"]]
     .map(([k,v,c])=>`<div class="lg"><div class="k">${k}</div><div class="v" style="color:var(${c})">${v}</div></div>`).join("");
   $("habN").textContent=`${n} of ${HABITS.length}`;
-  $("habits").innerHTML=HABITS.map(h=>{const on=!!S.daily.h[h[0]];return `<button class="cell hab ${on?"on":""}" data-habit="${h[0]}" role="checkbox" aria-checked="${on}"><span class="itile" style="background:var(${h[2]})">${h[3]}</span><span class="ct"><span class="t1">${esc(h[1])}</span></span><span class="tick">${G.check}</span></button>`}).join("");
+  $("habits").innerHTML=HABITS.map(h=>{const on=!!S.daily.h[h[0]];return `<button class="cell hab ${on?"on":""}" data-habit="${h[0]}" role="checkbox" aria-checked="${on}"><span class="itile" style="--ic:var(${h[2]})">${h[3]}</span><span class="ct"><span class="t1">${esc(h[1])}</span></span><span class="tick">${G.check}</span></button>`}).join("");
 }
 
 function renderLib(){
@@ -647,7 +642,7 @@ function renderSettings(){
   $("setBody").innerHTML=`<div class="lh">Appearance</div>
     <div class="group"><div class="looks" role="radiogroup" aria-label="Appearance">${[["light","Light"],["dark","Dark"],["glass","Transparent"]].map(([k,n])=>`<button class="look ${shown===k?"on":""}" data-lk="${k}" role="radio" aria-checked="${shown===k}"><span class="mini ${k}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>${n}</span><span class="lk-check" aria-hidden="true">${G.check}</span></button>`).join("")}</div>
     <label class="cell"><span class="ct"><span class="t1">Automatic</span></span><input type="checkbox" class="sw" id="autoLook" ${L==="auto"?"checked":""}></label></div>
-    <p class="lf">Automatic switches between Light and Dark with your iPhone. Transparent is a quiet graphite glass look.</p>
+    <p class="lf">Automatic switches between Light and Dark with your iPhone. Transparent is frosted glass with a soft glow in each day’s colour.</p>
     <div class="lh">Rest Timer</div>
     <div class="group">${segRow("Must-do lifts","main",[60,90,120])}${segRow("Other exercises","other",[45,60,90])}</div>
     <p class="lf">The timer starts by itself when you tick a set. Shorter rest keeps your heart rate up for fat loss.</p>
