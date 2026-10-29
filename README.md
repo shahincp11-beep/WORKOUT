@@ -1,5 +1,5 @@
 # Workout
 
-My four-day split (Chest & Triceps, Back & Biceps, Shoulders & Core, Legs & Core) as an iPhone home-screen app.
+My fitness app: four-day split (Chest & Triceps, Back & Biceps, Shoulders & Core, Legs & Core), Fitbit Air activity log, health checkups, diet plan and insights.
 
-Open https://shahincp11-beep.github.io/workout in Safari, then Share → Add to Home Screen.
+Open https://shahincp11-beep.github.io/WORKOUT/ in Safari, then Share → Add to Home Screen.
