@@ -27,7 +27,7 @@ img{max-width:100%}
   --label:#000000;--label2:rgba(60,60,67,.6);--label3:rgba(60,60,67,.3);--sep:rgba(60,60,67,.2);--gray:#8e8e93;
   --bar:rgba(249,249,249,.84);--barline:rgba(0,0,0,.16);--band:#f2f2f7;--menu:rgba(250,250,252,.88);--septhick:rgba(60,60,67,.1);
   --red:#ff3b30;--blue:#007aff;--orange:#ff9500;--green:#34c759;--mint:#00c7be;--purple:#af52de;--pink:#ff2d55;--indigo:#5856d6;--cyan:#32ade6;--yellow:#ffcc00;
-  --tint:var(--red);
+  --day:var(--red);--tint:var(--day);--ontint:#ffffff;--ring2:var(--mint);--ring3:var(--purple);
   --sys:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
   --round:ui-rounded,"SF Pro Rounded",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
@@ -70,21 +70,31 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
   --red:#ff453a;--blue:#0a84ff;--orange:#ff9f0a;--green:#30d158;--mint:#63e6e2;--purple:#bf5af2;--pink:#ff375f;--indigo:#5e5ce6;--cyan:#64d2ff;--yellow:#ffd60a;
   color-scheme:dark}
 :root[data-look][data-look="glass"]{
-  --bg:#0c0b14;--cell:rgba(255,255,255,.1);--sheet:rgba(26,24,38,.74);--sheetcell:rgba(255,255,255,.09);--segon:rgba(255,255,255,.3);
-  --fill:rgba(255,255,255,.22);--fill2:rgba(255,255,255,.14);--fill3:rgba(255,255,255,.08);
-  --label:#ffffff;--label2:rgba(255,255,255,.68);--label3:rgba(255,255,255,.36);--sep:rgba(255,255,255,.16);
-  --bar:rgba(22,20,34,.4);--barline:rgba(255,255,255,.18);--band:rgba(12,11,20,.4);--menu:rgba(48,46,64,.6);--septhick:rgba(0,0,0,.22);
+  --bg:#0a0a0b;--cell:rgba(255,255,255,.055);--sheet:rgba(20,20,22,.82);--sheetcell:rgba(255,255,255,.06);--segon:rgba(255,255,255,.2);
+  --fill:rgba(255,255,255,.2);--fill2:rgba(255,255,255,.1);--fill3:rgba(255,255,255,.06);
+  --label:#f5f5f7;--label2:rgba(245,245,247,.6);--label3:rgba(245,245,247,.3);--sep:rgba(255,255,255,.09);
+  --bar:rgba(14,14,16,.55);--barline:rgba(255,255,255,.1);--band:rgba(10,10,11,.55);--menu:rgba(38,38,42,.72);--septhick:rgba(0,0,0,.3);
   --red:#ff453a;--blue:#0a84ff;--orange:#ff9f0a;--green:#30d158;--mint:#63e6e2;--purple:#bf5af2;--pink:#ff375f;--indigo:#5e5ce6;--cyan:#64d2ff;--yellow:#ffd60a;
+  --tint:#f5f5f7;--ontint:#0a0a0b;--ring2:rgba(245,245,247,.72);--ring3:rgba(245,245,247,.42);
   color-scheme:dark}
 .wall{display:none;position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(70% 45% at 12% 8%,color-mix(in srgb,var(--tint) 80%,transparent),transparent 70%),
-    radial-gradient(60% 45% at 95% 38%,rgba(94,92,230,.85),transparent 70%),
-    radial-gradient(70% 50% at 20% 92%,rgba(64,200,224,.6),transparent 70%),
-    radial-gradient(50% 40% at 85% 95%,rgba(191,90,242,.55),transparent 70%),var(--bg)}
+  background:radial-gradient(120% 55% at 50% -12%,rgba(255,255,255,.13),transparent 62%),
+    radial-gradient(90% 45% at 50% 115%,rgba(255,255,255,.05),transparent 70%),
+    linear-gradient(180deg,#161618 0%,#0b0b0c 55%,#080809 100%)}
 :root[data-look="glass"] .wall{display:block}
 :root[data-look="glass"] .group,:root[data-look="glass"] .ex,:root[data-look="glass"] .summary{
   -webkit-backdrop-filter:blur(28px) saturate(170%);backdrop-filter:blur(28px) saturate(170%);
-  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.2),0 8px 28px rgba(0,0,0,.18)}
+  box-shadow:inset 0 0 0 .5px rgba(255,255,255,.08)}
+:root[data-look="glass"] nav button.on{color:var(--label)}
+:root[data-look="glass"] .itile{background:rgba(255,255,255,.08)!important;color:var(--label);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.12)}
+:root[data-look="glass"] .pill{background:rgba(255,255,255,.08);color:var(--label)}
+:root[data-look="glass"] .tt.r{color:var(--label2)}
+:root[data-look="glass"] .ok{color:var(--label)}
+:root[data-look="glass"] .ex.done .tile,:root[data-look="glass"] .addc.in{color:var(--tint)}
+:root[data-look="glass"] .ex.done .tile{background:var(--tint);color:var(--ontint)}
+:root[data-look="glass"] .play.soft{background:rgba(255,255,255,.08)}
+:root[data-look="glass"] .chip.hit{background:rgba(255,255,255,.08);color:var(--label)}
+:root[data-look="glass"] .lt{font-weight:600;letter-spacing:.005em}
 :root[data-look="glass"] .sheet{-webkit-backdrop-filter:blur(40px) saturate(170%);backdrop-filter:blur(40px) saturate(170%)}
 :root[data-look="glass"] .sheet .group{-webkit-backdrop-filter:none;backdrop-filter:none}
 button{font:inherit;color:inherit;letter-spacing:inherit;border:none;background:none;cursor:pointer;padding:0;margin:0}
@@ -157,11 +167,11 @@ button.cell:active,label.cell:active{background:var(--fill3)}
 .chk{--inset:52px;cursor:pointer}
 .circ{appearance:none;-webkit-appearance:none;flex:none;width:24px;height:24px;margin:0;border-radius:50%;border:1.5px solid var(--label3);display:grid;place-content:center;cursor:pointer;transition:background .15s,border-color .15s}
 .circ:checked{background:var(--tint);border-color:var(--tint)}
-.circ:checked::after{content:"";width:5px;height:10px;border:solid #fff;border-width:0 2.2px 2.2px 0;transform:rotate(45deg) translate(-1px,-1px)}
+.circ:checked::after{content:"";width:5px;height:10px;border:solid var(--ontint);border-width:0 2.2px 2.2px 0;transform:rotate(45deg) translate(-1px,-1px)}
 .chk:has(.circ:checked) .t1{color:var(--label2)}
 
 /* play buttons */
-.play{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-content:center;background:var(--tint);color:#fff;text-decoration:none}
+.play{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-content:center;background:var(--tint);color:var(--ontint);text-decoration:none}
 .play svg{width:14px;height:14px;margin-left:2px}
 .play.soft{background:color-mix(in srgb,var(--tint) 15%,transparent);color:var(--tint)}
 .play:active{opacity:.6}
@@ -170,7 +180,7 @@ button.cell:active,label.cell:active{background:var(--fill3)}
 .exlist{display:flex;flex-direction:column;gap:10px}
 .ex{background:var(--cell);border-radius:12px;padding:12px 16px 14px;display:flex;flex-direction:column;gap:12px}
 .exh{display:flex;align-items:center;gap:12px}
-.tile{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-content:center;background:var(--tint);color:#fff;font:600 15px var(--round)}
+.tile{flex:none;width:30px;height:30px;border-radius:8px;display:grid;place-content:center;background:var(--tint);color:var(--ontint);font:600 15px var(--round)}
 .tile svg{width:16px;height:16px}
 .ex.done .tile{background:var(--green)}
 .ex .play{width:34px;height:34px}
@@ -181,7 +191,7 @@ button.cell:active,label.cell:active{background:var(--fill3)}
 .lockg svg{width:18px;height:18px}
 .sets{display:flex;align-items:center;gap:6px;padding-left:42px}
 .set{flex:none;width:36px;height:36px;border-radius:50%;background:var(--fill2);color:var(--label);font:600 15px var(--round);transition:background .15s,transform .15s}
-.set.on{background:var(--tint);color:#fff}
+.set.on{background:var(--tint);color:var(--ontint)}
 .set:active{transform:scale(.92)}
 .kg{flex:none;margin-left:auto;display:flex;align-items:center;gap:4px;height:36px;padding:0 10px;border-radius:10px;background:var(--fill2)}
 .kg input{width:38px;border:none;background:none;color:var(--label);font:600 17px var(--round);text-align:right;padding:0}
@@ -212,7 +222,7 @@ button.cell:active,label.cell:active{background:var(--fill3)}
 .hab.on .tick{opacity:1}
 
 /* primary button */
-.big{width:100%;height:50px;border-radius:14px;background:var(--tint);color:#fff;font-size:17px;font-weight:600}
+.big{width:100%;height:50px;border-radius:14px;background:var(--tint);color:var(--ontint);font-size:17px;font-weight:600}
 .big:active{opacity:.8}
 .foot{margin:0;text-align:center;font-size:13px;color:var(--label2)}
 
@@ -297,10 +307,10 @@ nav button.on{color:var(--c)}
 .mini i:first-child{width:62%;height:7px;margin-bottom:3px;border-radius:2px}
 .mini.light{background:#f2f2f7}.mini.light i{background:#ffffff}.mini.light i:first-child{background:#1c1c1e}
 .mini.dark{background:#000000}.mini.dark i{background:#2c2c2e}.mini.dark i:first-child{background:#ffffff}
-.mini.glass{background:radial-gradient(90% 50% at 10% 10%,#ff453a,transparent 70%),radial-gradient(80% 50% at 100% 50%,#5e5ce6,transparent 70%),radial-gradient(90% 50% at 20% 100%,#40c8e0,transparent 70%),#0c0b14}
-.mini.glass i{background:rgba(255,255,255,.26);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.35)}.mini.glass i:first-child{background:#ffffff}
+.mini.glass{background:radial-gradient(130% 55% at 50% -10%,rgba(255,255,255,.2),transparent 65%),linear-gradient(180deg,#1a1a1c,#09090a)}
+.mini.glass i{background:rgba(255,255,255,.08);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.16)}.mini.glass i:first-child{background:#f5f5f7;box-shadow:none}
 .look.on .mini{box-shadow:0 0 0 2.5px var(--tint),0 2px 10px rgba(0,0,0,.14)}
-.lk-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--label3);display:grid;place-content:center;color:#fff}
+.lk-check{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--label3);display:grid;place-content:center;color:var(--ontint)}
 .lk-check svg{width:13px;height:13px;opacity:0}
 .look.on .lk-check{background:var(--tint);border-color:var(--tint)}
 .look.on .lk-check svg{opacity:1}
@@ -489,8 +499,8 @@ const G={
   check:sv('<path d="m5 12.5 4.5 4.5L19 7.5"/>',{w:2.6}),
   minus:sv('<path d="M6 12h12"/>',{w:3}),
   lock:sv('<rect x="5.5" y="10.5" width="13" height="10" rx="2.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'),
-  plusc:sv('<circle cx="12" cy="12" r="10.5" fill="currentColor" stroke="none"/><path d="M12 7.5v9M7.5 12h9" stroke="#fff" stroke-width="2.2"/>'),
-  checkc:sv('<circle cx="12" cy="12" r="10.5" fill="currentColor" stroke="none"/><path d="m7.5 12.3 3 3 6-6.3" stroke="#fff" stroke-width="2.2"/>'),
+  plusc:sv('<circle cx="12" cy="12" r="10.5" fill="currentColor" stroke="none"/><path d="M12 7.5v9M7.5 12h9" style="stroke:var(--ontint)" stroke-width="2.2"/>'),
+  checkc:sv('<circle cx="12" cy="12" r="10.5" fill="currentColor" stroke="none"/><path d="m7.5 12.3 3 3 6-6.3" style="stroke:var(--ontint)" stroke-width="2.2"/>'),
   addRow:sv('<circle cx="12" cy="12" r="9.5"/><path d="M12 8v8M8 12h8"/>'),
   shuffle:sv('<path d="M3 7h3.5c4 0 6 10 10 10H21M3 17h3.5c1.6 0 2.8-1.5 3.8-3.4M13.7 10.4c1-1.9 2.2-3.4 3.8-3.4H21M18 4l3 3-3 3M18 14l3 3-3 3"/>'),
   reset:sv('<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3.5 4v4.5H8"/>'),
@@ -538,7 +548,7 @@ const find=n=>D().lib.find(e=>e[0]===n);
 const nSets=e=>parseInt(e[3])||3;
 
 // activity rings
-const RINGS=[["r1",54,"--tint"],["r2",39,"--mint"],["r3",24,"--purple"]];
+const RINGS=[["r1",54,"--tint"],["r2",39,"--ring2"],["r3",24,"--ring3"]];
 RINGS.forEach(([id,r,c])=>{const C=2*Math.PI*r;
   $(id+"t").setAttribute("stroke",`color-mix(in srgb,var(${c}) 22%,transparent)`);
   const v=$(id);v.setAttribute("stroke",`var(${c})`);v.setAttribute("stroke-dasharray",C.toFixed(2));v.setAttribute("stroke-dashoffset",C.toFixed(2));});
@@ -546,7 +556,7 @@ function setRing(id,r,frac){const C=2*Math.PI*r;$(id).setAttribute("stroke-dasho
 
 function render(){
   const d=D(),p=plan();
-  document.documentElement.style.setProperty("--tint",`var(${d.color})`);
+  document.documentElement.style.setProperty("--day",`var(${d.color})`);
   const title=`${d.name[0]} ${d.name[1]}`;
   $("date").textContent=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
   $("title").textContent=title;$("navTitle").textContent=title;
@@ -593,7 +603,7 @@ function renderGoals(){
   const today=ymd(new Date());if(!S.daily||S.daily.d!==today)S.daily={d:today,h:{}};
   const cardio=weekCardio()+cardioToday(),n=HABITS.filter(h=>S.daily.h[h[0]]).length,[done,total]=S._sets||[0,0];
   setRing("r1",54,total?done/total:0);setRing("r2",39,cardio/150);setRing("r3",24,n/HABITS.length);
-  $("legend").innerHTML=[["Workout",`${done}<small>/${total} SETS</small>`,"--tint"],["Cardio",`${cardio}<small>/150 MIN</small>`,"--mint"],["Habits",`${n}<small>/${HABITS.length}</small>`,"--purple"]]
+  $("legend").innerHTML=[["Workout",`${done}<small>/${total} SETS</small>`,"--tint"],["Cardio",`${cardio}<small>/150 MIN</small>`,"--ring2"],["Habits",`${n}<small>/${HABITS.length}</small>`,"--ring3"]]
     .map(([k,v,c])=>`<div class="lg"><div class="k">${k}</div><div class="v" style="color:var(${c})">${v}</div></div>`).join("");
   $("habN").textContent=`${n} of ${HABITS.length}`;
   $("habits").innerHTML=HABITS.map(h=>{const on=!!S.daily.h[h[0]];return `<button class="cell hab ${on?"on":""}" data-habit="${h[0]}" role="checkbox" aria-checked="${on}"><span class="itile" style="background:var(${h[2]})">${h[3]}</span><span class="ct"><span class="t1">${esc(h[1])}</span></span><span class="tick">${G.check}</span></button>`}).join("");
@@ -637,7 +647,7 @@ function renderSettings(){
   $("setBody").innerHTML=`<div class="lh">Appearance</div>
     <div class="group"><div class="looks" role="radiogroup" aria-label="Appearance">${[["light","Light"],["dark","Dark"],["glass","Transparent"]].map(([k,n])=>`<button class="look ${shown===k?"on":""}" data-lk="${k}" role="radio" aria-checked="${shown===k}"><span class="mini ${k}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>${n}</span><span class="lk-check" aria-hidden="true">${G.check}</span></button>`).join("")}</div>
     <label class="cell"><span class="ct"><span class="t1">Automatic</span></span><input type="checkbox" class="sw" id="autoLook" ${L==="auto"?"checked":""}></label></div>
-    <p class="lf">Automatic switches between Light and Dark with your iPhone. Transparent puts the app on frosted glass.</p>
+    <p class="lf">Automatic switches between Light and Dark with your iPhone. Transparent is a quiet graphite glass look.</p>
     <div class="lh">Rest Timer</div>
     <div class="group">${segRow("Must-do lifts","main",[60,90,120])}${segRow("Other exercises","other",[45,60,90])}</div>
     <p class="lf">The timer starts by itself when you tick a set. Shorter rest keeps your heart rate up for fat loss.</p>
