@@ -383,6 +383,7 @@ nav button.on{color:var(--c)}
 .hseg{margin:0}
 .chev{flex:none;color:var(--label3)}
 .chev svg{width:14px;height:14px}
+.ss{font-size:13px;line-height:18px;font-weight:600;color:var(--tint);margin-top:2px}
 
 /* diet */
 .pcard .ph{display:flex;justify-content:space-between;align-items:baseline}
@@ -465,9 +466,9 @@ nav button.on{color:var(--c)}
     </header>
     <section class="summary" id="daySum" aria-label="Today's progress"></section>
     <section class="sec">
-      <div class="sh"><h2>Warm-up</h2><span class="hacc">15 min</span></div>
+      <div class="sh"><h2>Warm-up</h2><span class="hacc">10 min</span></div>
       <div class="group" id="warm"></div>
-      <p class="gf">10 minutes of cardio, then 5 minutes of stretching.</p>
+      <p class="gf">Moving warm-ups prepare your muscles better than long stretches before lifting. Save the long holds for the cool-down.</p>
     </section>
     <section class="sec">
       <div class="sh"><h2>Workout</h2><button class="hbtn" id="edit">Edit</button></div>
@@ -476,9 +477,9 @@ nav button.on{color:var(--c)}
       <div class="group" id="actions"></div>
     </section>
     <section class="sec">
-      <div class="sh"><h2>Cardio</h2><span class="hacc">20 min</span></div>
+      <div class="sh"><h2>Cardio &amp; Cool-down</h2><span class="hacc">15 min</span></div>
       <div class="group" id="fin"></div>
-      <p class="gf">Keep intervals at 70–80% effort until your doctor clears you for all-out sprints. Stop if you feel chest pain, dizziness or unusual breathlessness.</p>
+      <p class="gf">Intervals on chest and shoulder days, steady Zone 2 on back and leg days: both help heart health and fat loss. Keep intervals at 70–80% effort until your doctor clears you for harder work. Stop if you feel chest pain, dizziness or unusual breathlessness.</p>
     </section>
     <section class="sec">
       <button class="big" id="finish">Complete Workout</button>
@@ -551,19 +552,19 @@ nav button.on{color:var(--c)}
 <script>
 const DAYS=[
  {key:"chest",name:["Chest","& Triceps"],tag:"Push",short:"Chest",color:"--red",groups:["Chest","Triceps"],
-  lib:[["Barbell bench press","Chest","Barbell","4 × 10–12"],["Incline dumbbell press","Chest","Dumbbells","3 × 10–12"],["Flat dumbbell press","Chest","Dumbbells","3 × 8–12"],["Incline barbell press","Chest","Barbell","4 × 6–8"],["Decline bench press","Chest","Barbell","3 × 8–10"],["Machine chest press","Chest","Machine","3 × 10–12"],["Cable fly (high to low)","Chest","Cable","3 × 12–15"],["Cable fly (low to high)","Chest","Cable","3 × 12–15"],["Pec deck","Chest","Machine","3 × 12–15"],["Dumbbell fly","Chest","Dumbbells","3 × 10–12"],["Chest dips","Chest","Bodyweight","3 × AMRAP"],["Push-ups","Chest","Bodyweight","3 × 15–20"],["Smith incline press","Chest","Machine","3 × 8–10"],["Landmine press","Chest","Barbell","3 × 10"],
+  lib:[["Barbell bench press","Chest","Barbell","4 × 8–10"],["Incline dumbbell press","Chest","Dumbbells","3 × 10–12"],["Flat dumbbell press","Chest","Dumbbells","3 × 8–12"],["Incline barbell press","Chest","Barbell","4 × 6–8"],["Decline bench press","Chest","Barbell","3 × 8–10"],["Machine chest press","Chest","Machine","3 × 10–12"],["Cable fly (high to low)","Chest","Cable","3 × 12–15"],["Cable fly (low to high)","Chest","Cable","3 × 12–15"],["Pec deck","Chest","Machine","3 × 12–15"],["Dumbbell fly","Chest","Dumbbells","3 × 10–12"],["Chest dips","Chest","Bodyweight","3 × AMRAP"],["Push-ups","Chest","Bodyweight","2 × max reps"],["Smith incline press","Chest","Machine","3 × 8–10"],["Landmine press","Chest","Barbell","3 × 10"],
   ["Close-grip bench press","Triceps","Barbell","4 × 6–8"],["Rope pushdown","Triceps","Cable","3 × 12–15"],["Straight-bar pushdown","Triceps","Cable","3 × 10–12"],["Overhead cable extension","Triceps","Cable","3 × 12"],["EZ-bar skull crushers","Triceps","Barbell","3 × 8–10"],["Overhead dumbbell extension","Triceps","Dumbbells","3 × 10–12"],["Bench dips","Triceps","Bodyweight","3 × 15"],["Reverse-grip pushdown","Triceps","Cable","3 × 12"],["Dumbbell kickbacks","Triceps","Dumbbells","3 × 12–15"],["Diamond push-ups","Triceps","Bodyweight","3 × AMRAP"],["Machine dip","Triceps","Machine","3 × 10–12"],["JM press","Triceps","Barbell","3 × 8"],["Dumbbell pullover","Chest","Dumbbells","3 × 10–12"]]},
  {key:"back",name:["Back","& Biceps"],tag:"Pull",short:"Back",color:"--blue",groups:["Back","Biceps"],
-  lib:[["Deadlift","Back","Barbell","4 × 5"],["Pull-ups","Back","Bodyweight","4 × AMRAP"],["Wide lat pulldown","Back","Cable","4 × 10–12"],["Close-grip pulldown","Back","Cable","3 × 10–12"],["Barbell bent-over row","Back","Barbell","4 × 6–8"],["Single-arm dumbbell row","Back","Dumbbells","3 × 10–12 each"],["Seated cable row","Back","Cable","3 × 10–12"],["T-bar row","Back","Barbell","3 × 10–12"],["Chest-supported row","Back","Machine","3 × 10–12"],["Straight-arm pulldown","Back","Cable","3 × 12–15"],["Rack pulls","Back","Barbell","3 × 6"],["Romanian deadlift","Back","Barbell","3 × 8–10"],["Back extensions","Back","Bodyweight","3 × 15"],["Face pulls","Back","Cable","3 × 15"],
-  ["Barbell curl","Biceps","Barbell","3 × 12–15"],["EZ-bar curl","Biceps","Barbell","3 × 10"],["Alternating dumbbell curl","Biceps","Dumbbells","3 × 10 each"],["Hammer curl","Biceps","Dumbbells","3 × 10–12"],["Incline dumbbell curl","Biceps","Dumbbells","3 × 10"],["Preacher curl","Biceps","Machine","3 × 10–12"],["Cable curl","Biceps","Cable","3 × 12–15"],["Concentration curl","Biceps","Dumbbells","3 × 12–15 each"],["Spider curl","Biceps","Dumbbells","3 × 12"],["Rope hammer curl","Biceps","Cable","3 × 12–15"],["Chin-ups","Biceps","Bodyweight","3 × AMRAP"],["Reverse-grip curl","Biceps","Barbell","3 × 12"]]},
+  lib:[["Deadlift","Back","Barbell","4 × 5"],["Pull-ups","Back","Bodyweight","4 × AMRAP"],["Wide lat pulldown","Back","Cable","4 × 10–12"],["Close-grip pulldown","Back","Cable","3 × 10–12"],["Barbell bent-over row","Back","Barbell","4 × 6–8"],["Single-arm dumbbell row","Back","Dumbbells","3 × 10–12 each"],["Seated cable row","Back","Cable","3 × 10–12"],["T-bar row","Back","Barbell","3 × 10–12"],["Chest-supported row","Back","Machine","3 × 10–12"],["Straight-arm pulldown","Back","Cable","3 × 12–15"],["Rack pulls","Back","Barbell","3 × 6"],["Romanian deadlift","Back","Barbell","3 × 8–10"],["Back extensions","Back","Bodyweight","2 × 15"],["Face pulls","Back","Cable","3 × 15"],
+  ["Barbell curl","Biceps","Barbell","3 × 12–15"],["EZ-bar curl","Biceps","Barbell","3 × 10"],["Alternating dumbbell curl","Biceps","Dumbbells","3 × 10 each"],["Hammer curl","Biceps","Dumbbells","3 × 12"],["Incline dumbbell curl","Biceps","Dumbbells","3 × 10"],["Preacher curl","Biceps","Machine","3 × 10–12"],["Cable curl","Biceps","Cable","3 × 12–15"],["Concentration curl","Biceps","Dumbbells","3 × 12–15 each"],["Spider curl","Biceps","Dumbbells","3 × 12"],["Rope hammer curl","Biceps","Cable","3 × 12–15"],["Chin-ups","Biceps","Bodyweight","3 × AMRAP"],["Reverse-grip curl","Biceps","Barbell","3 × 12"]]},
  {key:"shoulders",name:["Shoulders","& Core"],tag:"Press",short:"Shoulders",color:"--orange",groups:["Shoulders","Core"],
   lib:[["Overhead barbell press","Shoulders","Barbell","4 × 6–8"],["Seated dumbbell press","Shoulders","Dumbbells","4 × 10–12"],["Arnold press","Shoulders","Dumbbells","3 × 10"],["Machine shoulder press","Shoulders","Machine","3 × 10–12"],["Dumbbell lateral raise","Shoulders","Dumbbells","3 × 12–15"],["Cable lateral raise","Shoulders","Cable","3 × 12–15"],["Front raise","Shoulders","Dumbbells","3 × 12"],["Rear delt fly","Shoulders","Dumbbells","3 × 12–15"],["Reverse pec deck","Shoulders","Machine","3 × 15"],["Upright row","Shoulders","Barbell","3 × 10–12"],["Dumbbell shrugs","Shoulders","Dumbbells","3 × 12–15"],["Landmine shoulder press","Shoulders","Barbell","3 × 10 each"],
-  ["Plank","Core","Bodyweight","3 × 30–45 s"],["Side plank","Core","Bodyweight","3 × 30 s each"],["Hanging leg raise","Core","Bodyweight","3 × 12–15"],["Cable crunch","Core","Cable","3 × 15"],["Ab wheel rollout","Core","Equipment","3 × 10"],["Russian twists","Core","Dumbbells","3 × 20 each side"],["Bicycle crunches","Core","Bodyweight","3 × 20"],["Decline sit-ups","Core","Bodyweight","3 × 15"],["Pallof press","Core","Cable","3 × 12 each"],["Mountain climbers","Core","Bodyweight","3 × 40 s"],["Dead bug","Core","Bodyweight","3 × 10 each"],["Cable woodchoppers","Core","Cable","3 × 12 each"],["V-ups","Core","Bodyweight","3 × 12–15"],["Hollow body hold","Core","Bodyweight","3 × 30 s"],["Reverse crunch","Core","Bodyweight","3 × 15"],["Lying leg raise","Core","Bodyweight","3 × 15"]]},
- {key:"legs",name:["Legs","& Core"],tag:"Lower",short:"Legs",color:"--green",groups:["Quads","Hamstrings","Glutes","Calves","Core"],
+  ["Plank","Core","Bodyweight","3 × 40 s"],["Side plank","Core","Bodyweight","3 × 30 s each"],["Hanging leg raise","Core","Bodyweight","3 × 10–15"],["Cable crunch","Core","Cable","3 × 15"],["Ab wheel rollout","Core","Equipment","3 × 10"],["Russian twists","Core","Dumbbells","2 × 20 each side"],["Bicycle crunches","Core","Bodyweight","3 × 20"],["Decline sit-ups","Core","Bodyweight","3 × 15"],["Pallof press","Core","Cable","3 × 12 each"],["Mountain climbers","Core","Bodyweight","3 × 40 s"],["Dead bug","Core","Bodyweight","3 × 10 each"],["Cable woodchoppers","Core","Cable","3 × 12 each"],["V-ups","Core","Bodyweight","3 × 12–15"],["Hollow body hold","Core","Bodyweight","3 × 30 s"],["Reverse crunch","Core","Bodyweight","3 × 15"],["Lying leg raise","Core","Bodyweight","3 × 15"]]},
+ {key:"legs",name:["Legs",""],tag:"Lower",short:"Legs",color:"--green",groups:["Quads","Hamstrings","Glutes","Calves"],
   lib:[["Back squat","Quads","Barbell","4 × 6–8"],["Front squat","Quads","Barbell","4 × 6–8"],["Leg press","Quads","Machine","4 × 12–15"],["Hack squat","Quads","Machine","3 × 8–10"],["Bulgarian split squat","Quads","Dumbbells","3 × 10 each"],["Walking lunges","Glutes","Dumbbells","3 × 10–12 each"],["Leg extension","Quads","Machine","3 × 12–15"],["Goblet squat","Quads","Dumbbells","3 × 12"],["Step-ups","Quads","Dumbbells","3 × 10 each"],["Smith machine squat","Quads","Machine","3 × 10"],
-  ["Romanian deadlift","Hamstrings","Barbell","3 × 10–12"],["Lying leg curl","Hamstrings","Machine","3 × 12–15"],["Seated leg curl","Hamstrings","Machine","3 × 12"],["Good mornings","Hamstrings","Barbell","3 × 10"],["Nordic curl","Hamstrings","Bodyweight","3 × 6"],["Sumo deadlift","Hamstrings","Barbell","3 × 6"],
+  ["Romanian deadlift","Hamstrings","Barbell","3 × 10"],["Lying leg curl","Hamstrings","Machine","3 × 12–15"],["Seated leg curl","Hamstrings","Machine","3 × 12"],["Good mornings","Hamstrings","Barbell","3 × 10"],["Nordic curl","Hamstrings","Bodyweight","3 × 6"],["Sumo deadlift","Hamstrings","Barbell","3 × 6"],
   ["Hip thrust","Glutes","Barbell","4 × 8–10"],["Glute bridge","Glutes","Bodyweight","3 × 15"],["Cable kickback","Glutes","Cable","3 × 12 each"],["Hip abduction machine","Glutes","Machine","3 × 15"],
-  ["Standing calf raise","Calves","Machine","3 × 15–20"],["Seated calf raise","Calves","Machine","3 × 15–20"],["Leg press calf raise","Calves","Machine","3 × 15"],["Single-leg calf raise","Calves","Dumbbells","3 × 12 each"],["Box jumps","Calves","Bodyweight","3 × 8"],["Jump rope","Calves","Equipment","3 × 60 s"],["Hanging knee tucks","Core","Bodyweight","3 × 12–15"],["Plank","Core","Bodyweight","3 × 30–45 s"],["Bicycle crunches","Core","Bodyweight","3 × 20"],["Dead bug","Core","Bodyweight","3 × 10 each"]]}
+  ["Standing calf raise","Calves","Machine","3 × 15"],["Seated calf raise","Calves","Machine","3 × 15–20"],["Leg press calf raise","Calves","Machine","3 × 15"],["Single-leg calf raise","Calves","Dumbbells","3 × 12 each"],["Box jumps","Calves","Bodyweight","3 × 8"],["Jump rope","Calves","Equipment","3 × 60 s"],["Hip adduction machine","Glutes","Machine","3 × 15"]]}
 ];
 // Must-do lifts: always in the plan, cannot be removed
 const ESS={
@@ -571,12 +572,18 @@ const ESS={
  back:["Wide lat pulldown","Seated cable row","Single-arm dumbbell row","Barbell curl"],
  shoulders:["Seated dumbbell press","Dumbbell lateral raise","Rear delt fly","Hanging leg raise"],
  legs:["Leg press","Romanian deadlift","Walking lunges","Standing calf raise"]};
-// The plan from your chart (with two swaps), loaded as each day's default workout
+// Default plan: 6 exercises, about 18 sets, so lifting fits in ~36 minutes
 const DEFAULT={
- chest:["Barbell bench press","Incline dumbbell press","Cable fly (high to low)","Push-ups","Rope pushdown","Overhead dumbbell extension","Dumbbell pullover"],
- back:["Wide lat pulldown","Seated cable row","Single-arm dumbbell row","Back extensions","Barbell curl","Hammer curl","Concentration curl"],
- shoulders:["Seated dumbbell press","Dumbbell lateral raise","Rear delt fly","Upright row","Plank","Hanging leg raise","Russian twists"],
- legs:["Leg press","Lying leg curl","Leg extension","Walking lunges","Standing calf raise","Romanian deadlift","Hanging knee tucks"]};
+ chest:["Barbell bench press","Incline dumbbell press","Cable fly (high to low)","Push-ups","Overhead dumbbell extension","Rope pushdown"],
+ back:["Wide lat pulldown","Seated cable row","Single-arm dumbbell row","Back extensions","Barbell curl","Hammer curl"],
+ shoulders:["Seated dumbbell press","Dumbbell lateral raise","Rear delt fly","Hanging leg raise","Plank","Russian twists"],
+ legs:["Leg press","Romanian deadlift","Walking lunges","Lying leg curl","Leg extension","Standing calf raise"]};
+// Pairs done back to back with rest only after the second
+const SUPER={
+ chest:[["Overhead dumbbell extension","Rope pushdown"],["Overhead cable extension","Rope pushdown"],["EZ-bar skull crushers","Rope pushdown"]],
+ back:[["Barbell curl","Hammer curl"],["EZ-bar curl","Hammer curl"],["Back extensions","Face pulls"]],
+ shoulders:[["Hanging leg raise","Plank","Russian twists"],["Dumbbell lateral raise","Rear delt fly"]],
+ legs:[["Lying leg curl","Leg extension"],["Seated leg curl","Leg extension"]]};
 // Every area a day must hit, and the exercises that hit it
 const AREAS={
  chest:{"Upper chest":["Incline dumbbell press","Incline barbell press","Smith incline press","Cable fly (low to high)","Landmine press"],
@@ -587,8 +594,7 @@ const AREAS={
  back:{"Lats (width)":["Pull-ups","Wide lat pulldown","Close-grip pulldown","Straight-arm pulldown","Single-arm dumbbell row"],
   "Mid back (thickness)":["Barbell bent-over row","Seated cable row","T-bar row","Chest-supported row","Face pulls"],
   "Lower back":["Deadlift","Rack pulls","Romanian deadlift","Back extensions"],
-  "Biceps mass":["Barbell curl","EZ-bar curl","Alternating dumbbell curl","Cable curl","Chin-ups"],
-  "Biceps peak":["Incline dumbbell curl","Preacher curl","Spider curl","Concentration curl"],
+  "Biceps":["Barbell curl","EZ-bar curl","Alternating dumbbell curl","Cable curl","Chin-ups","Incline dumbbell curl","Preacher curl","Spider curl","Concentration curl"],
   "Brachialis & forearm":["Hammer curl","Rope hammer curl","Reverse-grip curl"]},
  shoulders:{"Front delts":["Overhead barbell press","Seated dumbbell press","Arnold press","Machine shoulder press","Front raise","Landmine shoulder press"],
   "Side delts":["Dumbbell lateral raise","Cable lateral raise","Upright row"],
@@ -601,23 +607,30 @@ DAYS.forEach(d=>{if(!AREAS[d.key]){AREAS[d.key]={};d.groups.forEach(g=>AREAS[d.k
 const areaOf=(k,n)=>Object.keys(AREAS[k]).find(a=>AREAS[k][a].includes(n))||"";
 const isEss=(k,n)=>ESS[k].includes(n);
 
-// 4th field = tier: m must-do, r recommended, o optional
+// 4th field = tier: m must-do, r recommended, o optional · 5th "s" = stretch (not counted as cardio)
+// Warm-up (10 min): easy incline walk, a quick pulse raiser, moves for today's muscles, then light warm-up sets
+const W1=["Incline treadmill walk","Easy-brisk pace · 5–6 km/h · 6–8% incline","5 min","m"];
+const WJJ=["Jumping jacks","2 × 30 s to raise your heart rate","1 min","r"];
+const WGS=["World's greatest stretch","3 slow reps each side","1 min","m"];
+const WSET=n=>["Warm-up sets",`2 light sets of ${n} before your working sets`,"2 min","m"];
 const WARM={common:[],
- chest:[["Treadmill","Moderate pace · brisk walk or easy jog","10 min","m"],["World's greatest stretch","5 slow reps each side","2 min","m"],["Band pull-aparts","2 × 15","1 min","m"],["Doorway chest stretch","30 s each side","1 min","r"],["Arm circles","Both directions","1 min","o"]],
- back:[["Stationary bike","Moderate resistance","10 min","m"],["World's greatest stretch","5 slow reps each side","2 min","m"],["Dead hang","2 × 20 s","1 min","m"],["Band rows","2 × 15","1 min","r"],["Thread the needle","5 each side","1 min","o"]],
- shoulders:[["Treadmill incline walk","10–12% incline · steady pace","10 min","m"],["World's greatest stretch","5 slow reps each side","2 min","m"],["Band dislocates","2 × 10","1 min","m"],["Shoulder circles","5 slow circles each side","1 min","r"],["Bird dogs","8 each side","1 min","o"]],
- legs:[["Stationary bike","Easy to moderate resistance","10 min","m"],["World's greatest stretch","5 slow reps each side","2 min","m"],["Bodyweight squats","2 × 15","1 min","m"],["Hip 90/90 stretch","30 s each side","1 min","r"],["Leg swings","10 each direction","1 min","o"]]};
-const Z2=["Zone 2 incline walk","Easy-steady pace you can talk at · 10–12% incline · 5–6 km/h","20 min"];
-const FIN={chest:[["Stair climber","High resistance · steady · 70–80% effort","10 min","m"],["Rowing machine","Moderate intensity · smooth strokes","10 min","m"],[...Z2,"o"]],
- back:[["Rowing machine","Moderate to high intensity · 70–80% effort","10 min","m"],["Elliptical","Moderate pace","10 min","m"],[...Z2,"o"]],
- shoulders:[["Elliptical intervals","30 s fast / 30 s slow · 70–80% effort","10 min","m"],["Rowing machine","Moderate to high intensity","10 min","m"],[...Z2,"o"]],
- legs:[["Stair climber","Moderate pace","10 min","m"],["Jump rope","40 s on / 20 s rest · 70–80% effort","10 min","m"],[...Z2,"o"]]};
+ chest:[W1,WJJ,WGS,["Band pull-aparts","2 × 15 · wakes up the upper back","1 min","m"],["Arm circles and chest openers","10 each direction","1 min","o"],WSET("bench press")],
+ back:[W1,WJJ,WGS,["Dead hang","2 × 20 s · loosens shoulders and lats","1 min","m"],["Cat-cow and thoracic rotations","8 each","1 min","o"],WSET("lat pulldown")],
+ shoulders:[W1,WJJ,WGS,["Band dislocates","2 × 10 · opens the shoulders","1 min","m"],["Band external rotations","2 × 12 each arm","1 min","r"],WSET("shoulder press")],
+ legs:[W1,WJJ,WGS,["Bodyweight squats","2 × 15","1 min","m"],["Leg swings and hip circles","10 each direction","1 min","r"],WSET("leg press")]};
+// After lifting (15 min): 12 min cardio, alternating intervals and steady Zone 2, then 3 min stretching
+const Z2=["Zone 2 incline walk","Steady pace you can still talk at · 10–12% incline · 5–6 km/h","12 min"];
+const COOL=t=>["Cool-down stretch",`${t} · hold each 30 s`,"3 min","m","s"];
+const FIN={chest:[["Treadmill intervals","6 rounds · 1 min fast walk or jog / 1 min easy · 70–80% effort","12 min","m"],["Rowing machine","Swap-in · steady, smooth strokes","12 min","r"],COOL("Chest, triceps and shoulders")],
+ back:[[...Z2,"m"],["Stationary bike","Swap-in · steady, moderate resistance","12 min","r"],COOL("Lats, biceps and lower back")],
+ shoulders:[["Bike intervals","8 rounds · 30 s hard / 60 s easy · 70–80% effort","12 min","m"],["Elliptical","Swap-in · steady, moderate pace","12 min","r"],COOL("Shoulders, chest and hip flexors")],
+ legs:[[...Z2,"m"],["Stair climber","Swap-in · slow, steady pace","12 min","r"],COOL("Quads, hamstrings, glutes and calves")]};
 // Recommended lifts; everything not must-do or recommended is optional
 const REC={
  chest:["Cable fly (high to low)","Push-ups","Dumbbell pullover","Flat dumbbell press","Incline barbell press","Chest dips","Cable fly (low to high)","Close-grip bench press","EZ-bar skull crushers","Overhead cable extension"],
  back:["Back extensions","Hammer curl","Concentration curl","T-bar row","Pull-ups","Deadlift","Barbell bent-over row","Face pulls","Incline dumbbell curl","Chin-ups"],
  shoulders:["Upright row","Plank","Russian twists","Overhead barbell press","Arnold press","Cable lateral raise","Reverse pec deck","Dumbbell shrugs","Cable crunch","Ab wheel rollout"],
- legs:["Lying leg curl","Leg extension","Hanging knee tucks","Back squat","Bulgarian split squat","Hip thrust","Seated leg curl","Seated calf raise","Plank"]};
+ legs:["Lying leg curl","Leg extension","Back squat","Bulgarian split squat","Hip thrust","Seated leg curl","Seated calf raise"]};
 const TIERS={m:"Must-do",r:"Recommended",o:"Optional"};
 const tierOf=(k,n)=>ESS[k].includes(n)?"m":REC[k].includes(n)?"r":"o";
 
@@ -671,7 +684,8 @@ Object.assign(G,{
 });
 
 // ---------- state ----------
-const MAX=7;
+const MAX=7,TARGET=6;
+const dname=d=>(d.name[0]+" "+d.name[1]).trim();
 const HABITS=[["steps","Walk 8–10k steps","--orange",G.walk],["protein","Hit your protein target","--pink",G.fork],["water","Drink 2.5–3 L water","--cyan",G.drop],["sleep","Sleep 7–8 hours","--indigo",G.moon],["food","No fried food or sugary drinks","--green",G.leaf]];
 const ymd=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
 const today=()=>ymd(new Date());
@@ -693,7 +707,8 @@ function load(){let s=null;try{s=JSON.parse(localStorage.getItem("split4v3"))}ca
 function norm(){S.edit=false;S.view=null;S.look=S.look||"auto";S.rest=S.rest||{main:90,other:60};
   for(const k of ["sets","wts","checks","act","meals","protein","profile","plans"])S[k]=S[k]||{};
   for(const k of ["log","sessions","checkups","body"])S[k]=S[k]||[];
-  S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";}
+  S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";
+  if(S.planVer!==2){S.plans=JSON.parse(JSON.stringify(DEFAULT));S.sets={};S.checks={};S.planVer=2;}}
 norm();
 function save(){try{const {edit,view,...keep}=S;localStorage.setItem("split4v3",JSON.stringify(keep))}catch(e){}}
 let resetArm=false;
@@ -702,11 +717,18 @@ let resetArm=false;
 const D=()=>DAYS[S.view??S.day];
 const find=n=>D().lib.find(e=>e[0]===n);
 const nSets=e=>parseInt(e[3])||3;
+function rankIn(d,n){const def=DEFAULT[d.key],i=def.indexOf(n);if(i>=0)return i;
+  const e=d.lib.find(x=>x[0]===n),g=e?e[1]:"";let pos=-1;def.forEach((m,j)=>{const f=d.lib.find(x=>x[0]===m);if(f&&f[1]===g)pos=j;});
+  return (pos>=0?pos:def.length)+0.5+d.lib.findIndex(x=>x[0]===n)/1000;}
 function planFor(d){const k=d.key;let p=S.plans[k]||(S.plans[k]=[...DEFAULT[k]]);
-  const ess=ESS[k],rest=p.filter(n=>!ess.includes(n)&&d.lib.some(e=>e[0]===n));
-  const fixed=[...ess,...rest].slice(0,MAX);
+  const ess=ESS[k],valid=p.filter(n=>d.lib.some(e=>e[0]===n));
+  const extras=valid.filter(n=>!ess.includes(n)).slice(0,MAX-ess.length);
+  const fixed=[...ess,...extras].sort((a,b)=>rankIn(d,a)-rankIn(d,b));
   if(fixed.join("|")!==p.join("|")){p.length=0;p.push(...fixed);}
   return p;}
+// superset partner that follows n in today's plan (rest only after the last one)
+function nextInSuper(k,n,p){for(const g of SUPER[k]||[]){const inP=g.filter(x=>p.includes(x));const i=inP.indexOf(n);if(i>=0&&inP.length>1)return i<inP.length-1?inP[i+1]:null;}return null;}
+function superLabel(k,n,p){for(const g of SUPER[k]||[]){const inP=g.filter(x=>p.includes(x));if(inP.length>1&&inP.includes(n)){const i=inP.indexOf(n);return i<inP.length-1?`Superset → ${inP[i+1]}`:"Superset · rest after this";}}return "";}
 const plan=()=>planFor(D());
 const missing=()=>{const k=D().key,p=plan();return Object.keys(AREAS[k]).filter(a=>!AREAS[k][a].some(n=>p.includes(n)))};
 function fillGaps(){const k=D().key,p=plan();let added=0;
@@ -714,17 +736,17 @@ function fillGaps(){const k=D().key,p=plan();let added=0;
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function autoPick(){const d=D();S.plans[d.key]=[];const p=plan();fillGaps();
   const left=shuffle(d.lib.map(e=>e[0]).filter(n=>!p.includes(n)));
-  const rest=[...left.filter(n=>tierOf(d.key,n)==="r"),...left.filter(n=>tierOf(d.key,n)==="o")];while(p.length<MAX&&rest.length)p.push(rest.shift());
+  const rest=[...left.filter(n=>tierOf(d.key,n)==="r"),...left.filter(n=>tierOf(d.key,n)==="o")];while(p.length<TARGET&&rest.length)p.push(rest.shift());p.sort((a,b)=>rankIn(d,a)-rankIn(d,b));
   clearProgress(d.key);renderAll();toast("New workout, every area covered");}
 function clearProgress(k){Object.keys(S.sets).forEach(x=>x.startsWith(k+"|")&&delete S.sets[x]);Object.keys(S.checks).forEach(x=>x.startsWith(k)&&delete S.checks[x]);}
 const minsOf=x=>parseInt(x[2])||0;
-function cardioPending(k){let m=S.checks[k+"w0"]?minsOf(WARM[k][0]):0;FIN[k].forEach((f,i)=>{if(S.checks[k+"f"+i])m+=minsOf(f)});return m;}
-const cardioGoal=k=>minsOf(WARM[k][0])+FIN[k].filter(f=>f[3]==="m").reduce((a,f)=>a+minsOf(f),0);
+function cardioPending(k){let m=S.checks[k+"w0"]?minsOf(WARM[k][0]):0;FIN[k].forEach((f,i)=>{if(S.checks[k+"f"+i]&&f[4]!=="s")m+=minsOf(f)});return m;}
+const cardioGoal=k=>minsOf(WARM[k][0])+FIN[k].filter(f=>f[3]==="m"&&f[4]!=="s").reduce((a,f)=>a+minsOf(f),0);
 const weekCardio=()=>{const ws=weekStart();return S.log.filter(x=>x.d>=ws).reduce((a,x)=>a+x.m,0)+DAYS.reduce((a,d)=>a+cardioPending(d.key),0);};
 const weekSessions=()=>{const ws=weekStart();return S.sessions.filter(x=>x.d>=ws).length;};
 function dayStats(d){const p=planFor(d);let total=0,done=0;p.forEach(n=>{const e=d.lib.find(x=>x[0]===n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[d.key+"|"+n]||0,ns);});
   const mm=l=>l.filter(x=>x[3]==="m").reduce((a,x)=>a+minsOf(x),0);
-  return {p,total,done,mins:p.length?mm(WARM[d.key])+Math.round(total*2.4)+mm(FIN[d.key]):0};}
+  return {p,total,done,lift:Math.round(total*2),mins:p.length?mm(WARM[d.key])+Math.round(total*2)+mm(FIN[d.key]):0};}
 
 // ---------- shared UI ----------
 function rings(items){const R=[54,39,24];
@@ -801,7 +823,7 @@ function renderAll(){
   const dateTxt=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
   $$("[data-date]").forEach(e=>e.textContent=dateTxt);
   $$("[data-streak]").forEach(e=>{e.innerHTML=`${G.flame}<b>${S.count}</b>`;e.setAttribute("aria-label",`${S.count} workouts completed`);});
-  $("navTitle").textContent=scr==="day"?`${D().name[0]} ${D().name[1]}`:$("scr-"+scr).dataset.title;
+  $("navTitle").textContent=scr==="day"?`${dname(D())}`:$("scr-"+scr).dataset.title;
   $$(".bback").forEach(b=>b.hidden=scr!=="day");
   $("nav").innerHTML=TABS.map(([k,n,ic])=>`<button class="${S.tab===k?"on":""}" data-tab="${k}" style="--c:var(--tint)" ${S.tab===k?'aria-current="page"':""}>${ic}${n}</button>`).join("");
   ({workout:renderHome,day:renderDay,activity:renderActivity,health:renderHealth,insights:renderInsights})[scr]();
@@ -812,20 +834,20 @@ function renderAll(){
 function renderHome(){
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   $("homeSum").innerHTML=rings([["Workouts",weekSessions(),4,"THIS WEEK","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Habits",n,HABITS.length,"TODAY","--ring3"]])
-    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${DAYS[S.day].name.join(" ")}</b></span></div>`;
+    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div>`;
   $("days").innerHTML=DAYS.map((d,i)=>{const st=dayStats(d),last=[...S.sessions].reverse().find(x=>x.k===d.key),prog=st.done&&st.done<st.total?` · ${st.done}/${st.total} done`:"";
-    return `<button class="dcard ${i===S.day?"next":""}" data-open="${i}" style="--c:var(${d.color})" aria-label="Day ${i+1}, ${d.name.join(" ")}${i===S.day?", up next":""}">
-      ${i===S.day?'<span class="badge">Up next</span>':""}<span class="dic">${G.tab[d.key]}</span><span class="dn">Day ${i+1}</span><span class="dt">${d.name[0]} ${d.name[1]}</span>
+    return `<button class="dcard ${i===S.day?"next":""}" data-open="${i}" style="--c:var(${d.color})" aria-label="Day ${i+1}, ${dname(d)}${i===S.day?", up next":""}">
+      ${i===S.day?'<span class="badge">Up next</span>':""}<span class="dic">${G.tab[d.key]}</span><span class="dn">Day ${i+1}</span><span class="dt">${dname(d)}</span>
       <span class="dm">${st.p.length} exercises · ~${st.mins} min${prog}<br>${last?`Last done ${fmtD(last.d)}`:"Not done yet"}</span></button>`;}).join("");
   const rec=[...S.sessions].reverse().slice(0,6);
-  $("recent").innerHTML=rec.length?rec.map(x=>{const d=DAYS.find(y=>y.key===x.k);return `<div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(${d.color})">${G.tab[d.key]}</span><span class="ct"><span class="t1">${d.name.join(" ")}</span><span class="t2">${x.done}/${x.total} sets${x.cm?` · ${x.cm} min cardio`:""}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span></div>`}).join("")
+  $("recent").innerHTML=rec.length?rec.map(x=>{const d=DAYS.find(y=>y.key===x.k);return `<div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(${d.color})">${G.tab[d.key]}</span><span class="ct"><span class="t1">${dname(d)}</span><span class="t2">${x.done}/${x.total} sets${x.cm?` · ${x.cm} min cardio`:""}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span></div>`}).join("")
     :emptyCell("No workouts yet","Finished workouts will show here.");
 }
 
 // ---------- 1b · day detail ----------
 function renderDay(){
   const d=D(),p=plan(),k=d.key;
-  $("title").textContent=`${d.name[0]} ${d.name[1]}`;
+  $("title").textContent=`${dname(d)}`;
   $("dayno").textContent=`Day ${S.view+1} of 4 · ${d.tag}${S.view===S.day?" · Up next":""}`;
   const rows=(id,list)=>list.map((w,i)=>{const ck=k+id+i;return `<label class="cell chk"><input type="checkbox" class="circ" id="c-${ck}" data-ck="${ck}" ${S.checks[ck]?"checked":""}><span class="ct"><span class="t1">${esc(w[0])}</span><span class="t2">${tierTag(w[3])}${esc(w[1])}</span></span><span class="acc">${esc(w[2])}</span>${play(w[0],id==="w"?"warm up how to":"workout",true)}</label>`}).join("");
   $("warm").innerHTML=rows("w",WARM[k]);$("fin").innerHTML=rows("f",FIN[k]);
@@ -834,7 +856,7 @@ function renderDay(){
     const ess=isEss(k,n),tr=tierOf(k,n),complete=dn===ns;
     const lead=S.edit?(ess?`<span class="lockg" title="Must-do exercises stay in your plan">${G.lock}</span>`:`<button class="del" data-rm="${esc(n)}" aria-label="Remove ${esc(n)}">${G.minus}</button>`):"";
     return `<article class="ex ${complete?"done":""}"><div class="exh">${lead}<span class="tile" aria-hidden="true">${complete?G.check:i+1}</span>
-      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span></div>${play(n)}</div>
+      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${superLabel(k,n,p)?`<span class="ss">${esc(superLabel(k,n,p))}</span>`:""}</div>${play(n)}</div>
       <div class="sets">${Array.from({length:ns},(_,j)=>`<button class="set ${j<dn?"on":""}" data-set="${esc(n)}" data-i="${j}" aria-label="Set ${j+1}${j<dn?", done":""}">${j+1}</button>`).join("")}
       <label class="kg"><input id="w-${k}-${i}" inputmode="decimal" placeholder="0" data-wt="${esc(n)}" value="${esc(S.wts[sk]||"")}" aria-label="Weight for ${esc(n)}"><span>kg</span></label></div></article>`}).join("")
     :`<div class="group">${emptyCell("No Exercises","Tap Shuffle Workout or Add Exercise.")}</div>`;
@@ -850,7 +872,7 @@ function renderDay(){
   const warmDone=WARM[k].filter((_,i)=>S.checks[k+"w"+i]).length;
   const mins=dayStats(d).mins;
   $("daySum").innerHTML=rings([["Sets",done,total,"SETS","--tint"],["Cardio",cardioPending(k),cardioGoal(k),"MIN","--ring2"],["Warm-up",warmDone,WARM[k].length,"DONE","--ring3"]])
-    +`<div class="sumfoot"><span><b>${p.length}</b> exercises</span><span><b>${total}</b> sets</span><span>about <b>${mins}</b> min</span></div>`;
+    +`<div class="sumfoot"><span>Warm-up <b>10</b></span><span>Lifting <b>~${dayStats(d).lift}</b></span><span>Cardio <b>15</b></span><span style="${mins>62?"color:var(--orange)":""}">= <b>${mins}</b> min</span></div>${mins>62?`<p class="gf" style="padding:0;color:var(--orange)">Over your 1-hour limit. Remove an optional exercise to fit.</p>`:""}`;
   const last=[...S.sessions].reverse().find(x=>x.k===k);
   $("last").textContent=last?`Last time: ${fmtD(last.d)}, ${last.done}/${last.total} sets.`:"Completing saves your sets, weights and cardio.";
   renderLib();
@@ -876,7 +898,7 @@ function completeWorkout(){
   const cm=cardioPending(k);
   if(cm){S.log=S.log.filter(x=>x.d>=daysAgo(60));S.log.push({d:today(),m:cm});}
   S.sessions.push({d:today(),k,done,total,cm,w});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
-  S.last=`${d.name.join(" ")}, ${fmtD(today())}`;S.count++;clearProgress(k);S.day=(S.view+1)%4;S.view=null;S.edit=false;stopRest();
+  S.last=`${dname(d)}, ${fmtD(today())}`;S.count++;clearProgress(k);S.day=(S.view+1)%4;S.view=null;S.edit=false;stopRest();
   renderAll();scrollTo({top:0});toast(`Workout saved. Next: ${DAYS[S.day].name[0]}`);}
 
 // ---------- 2 · activity ----------
@@ -1021,10 +1043,10 @@ function insights(){const out=[];const add=(ic,c,t,d,s)=>out.push({ic,c,t,d,s});
 function buildReport(question){const L=[],td=today(),p=S.profile;
   L.push("Please analyse my fitness and health data below and give me clear, specific advice.","");
   L.push("## About me",`- Male${p.age?`, ${p.age} years old`:""}${p.height?`, ${p.height} cm tall`:""}`,"- Goals: lose body fat (especially chest fat), build muscle, improve heart health and lower my cholesterol.",`- Report date: ${td}`,"");
-  L.push("## Training plan (4-day rotation, warm-up 10 min cardio + 5 min stretch, 20 min cardio after)");
-  DAYS.forEach((d,i)=>L.push(`- Day ${i+1} ${d.name.join(" ")}: ${planFor(d).map(n=>{const e=d.lib.find(x=>x[0]===n);return `${n} (${e?e[3]:""})`;}).join(", ")}`));
+  L.push("## Training plan (4-day rotation, 1 hour max: 10 min warm-up, ~36 min lifting, 12 min cardio, 3 min stretch)");
+  DAYS.forEach((d,i)=>L.push(`- Day ${i+1} ${dname(d)}: ${planFor(d).map(n=>{const e=d.lib.find(x=>x[0]===n);return `${n} (${e?e[3]:""})`;}).join(", ")}`));
   L.push("","## Workouts completed (last 45 days)");const ss=S.sessions.filter(x=>x.d>=daysAgo(45));
-  L.push(ss.length?ss.map(x=>`- ${x.d} ${DAYS.find(d=>d.key===x.k).name.join(" ")}: ${x.done}/${x.total} sets, ${x.cm} min cardio${Object.keys(x.w||{}).length?`; weights: ${Object.entries(x.w).map(([n,v])=>`${n} ${v} kg`).join(", ")}`:""}`).join("\n"):"- None logged yet");
+  L.push(ss.length?ss.map(x=>`- ${x.d} ${dname(DAYS.find(d=>d.key===x.k))}: ${x.done}/${x.total} sets, ${x.cm} min cardio${Object.keys(x.w||{}).length?`; weights: ${Object.entries(x.w).map(([n,v])=>`${n} ${v} kg`).join(", ")}`:""}`).join("\n"):"- None logged yet");
   L.push("","## Fitbit Air activity (last 21 days)");const ad=Object.keys(S.act).filter(d=>d>=daysAgo(21)).sort();
   L.push(ad.length?["| Date | Steps | Zone min | Resting HR | Sleep h | HRV ms | Calories |","|---|---|---|---|---|---|---|",...ad.map(d=>{const a=S.act[d];return `| ${d} | ${a.steps??""} | ${a.azm??""} | ${a.rhr??""} | ${a.sleep??""} | ${a.hrv??""} | ${a.kcal??""} |`;})].join("\n"):"- None logged yet");
   L.push("","## Body measurements");L.push(S.body.length?sortD(S.body).slice(-15).map(x=>`- ${x.d}: ${[x.kg!=null?x.kg+" kg":"",x.waist!=null?"waist "+x.waist+" cm":"",x.bf!=null?"body fat "+x.bf+"%":""].filter(Boolean).join(", ")}`).join("\n"):"- None logged yet");
@@ -1104,7 +1126,7 @@ document.addEventListener("click",ev=>{
   const p=S.view!=null?plan():null;
   if(ds.add){const n=ds.add,i=p.indexOf(n);if(i>=0)p.splice(i,1);else if(p.length<MAX)p.push(n);else return toast("You have 7. Remove one first.");renderAll();return;}
   if(ds.rm){p.splice(p.indexOf(ds.rm),1);renderAll();return;}
-  if(ds.set){const k=D().key+"|"+ds.set,i=+ds.i,was=S.sets[k]||0;S.sets[k]=was>i?i:i+1;renderAll();if(S.sets[k]>was)startRest(isEss(D().key,ds.set)?S.rest.main:S.rest.other);return;}
+  if(ds.set){const k=D().key+"|"+ds.set,i=+ds.i,was=S.sets[k]||0;S.sets[k]=was>i?i:i+1;renderAll();if(S.sets[k]>was){const nx=nextInSuper(D().key,ds.set,plan());if(nx)toast(`Now ${nx}, then rest`);else startRest(isEss(D().key,ds.set)?S.rest.main:S.rest.other);}return;}
   switch(t.id){
     case "edit":S.edit=!S.edit;renderAll();break;
     case "auto":autoPick();break;
