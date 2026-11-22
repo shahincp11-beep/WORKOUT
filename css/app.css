@@ -462,11 +462,20 @@ nav button.on{color:var(--c)}
   .acbox{height:260px}
 }
 
-/* v3 in-app video player */
-.vframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(128,128,128,.2)}
-.vframe.sh{aspect-ratio:9/16;max-height:55vh;width:auto;margin:0 auto}
+/* v3 in-app video player: just the video, options behind the round button */
+.vpop{position:fixed;inset:0;z-index:22;display:flex;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top,0px)) 16px max(16px,env(safe-area-inset-bottom,0px));background:rgba(0,0,0,.72);opacity:0;pointer-events:none;transition:opacity .25s;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.vpop.open{opacity:1;pointer-events:auto}
+.vpin{width:100%;max-width:440px;margin:auto;display:flex;flex-direction:column;align-items:center;gap:14px}
+.vframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:16px;overflow:hidden;background:#000}
+.vframe.sh{aspect-ratio:9/16;height:min(72vh,calc((100vw - 32px)*16/9));width:auto;max-width:100%}
 .vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vmore{width:44px;height:44px;border-radius:50%;display:grid;place-content:center;background:rgba(255,255,255,.14);color:#fff;transition:transform .2s,background .2s}
+.vmore svg{width:22px;height:22px}.vmore.on{background:var(--tintfill);color:var(--ontint)}
+.vopts{display:none;width:100%;background:var(--sheet,#1c1c1e);border-radius:16px;padding:14px}
+.vopts.show{display:block}
+.vopts .group{background:var(--sheetcell,var(--cell))}
+.vhd{display:flex;flex-direction:column;align-items:center;margin:2px 0 12px;text-align:center}.vhd b{font-size:17px}.vhd span{font-size:13px;color:var(--label2)}
 .vlink{color:inherit;text-decoration:none}.vlink>svg{width:16px;height:16px;flex:none;color:var(--tint)}
-.vin input{flex:1;min-width:0;background:none;border:0;color:var(--label,inherit);font:inherit;font-size:16px;padding:4px 0;outline:none}
+.vin input{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;font-size:16px;padding:4px 0;outline:none}
 .vpaste{flex:none;padding:6px 12px;border-radius:999px;background:var(--fill2);color:var(--tint);font-size:15px;font-weight:600}
 .vbtn{margin-top:12px}

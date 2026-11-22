@@ -175,14 +175,14 @@ const ytId=x=>{x=(x||"").trim();const m=x.match(/(?:youtu\.be\/|[?&]v=|\/(?:shor
 const vidOf=n=>S.vids[n]||(S.defVids?DEFVID[n]:null)||null;
 function openVid(n,q){VID={n,q};renderVid();openSheet("vid");}
 function renderVid(){const {n,q}=VID,v=vidOf(n),own=!!S.vids[n],def=S.defVids&&DEFVID[n];
-  $("vidTtl").textContent=n;$("vidSub").textContent=v?(own?"Your video":"Default video"):"No video yet";
-  $("vidBody").innerHTML=(v?`<div class="vframe${v.sh?" sh":""}"><iframe src="https://www.youtube-nocookie.com/embed/${v.id}?playsinline=1&autoplay=1&rel=0" title="${esc(n)} video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
-    :`<div class="card"><span class="ct"><span class="t1">No video chosen yet</span><span class="t2">Find one you like on YouTube, copy its link, then paste it below. From then on only that video plays here.</span></span></div>`)
-  +`<div class="lh">${v?"Change video":"Choose video"}</div><div class="group">
-    <a class="cell vlink" href="https://www.youtube.com/results?search_query=${encodeURIComponent(n+" "+q)}" target="_blank" rel="noopener"><span class="ct"><span class="t1">1. Find on YouTube</span><span class="t2">On the video you like, tap Share → Copy Link</span></span>${G.out}</a>
+  $("vidBody").innerHTML=(v?`<div class="vframe${v.sh?" sh":""}"><iframe src="https://www.youtube-nocookie.com/embed/${v.id}?playsinline=1&autoplay=1&rel=0" title="${esc(n)} video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <button type="button" class="vmore" id="vidMore" aria-label="Video options" aria-expanded="false"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5.5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="18.5" cy="12" r="2"/></svg></button>`:"")
+  +`<div class="vopts${v?"":" show"}" id="vidOpts"><div class="vhd"><b>${esc(n)}</b><span>${v?(own?"Your video":"Default video"):"No video chosen yet"}</span></div>
+    <div class="group"><a class="cell vlink" href="https://www.youtube.com/results?search_query=${encodeURIComponent(n+" "+q)}" target="_blank" rel="noopener"><span class="ct"><span class="t1">1. Find on YouTube</span><span class="t2">On the video you like, tap Share → Copy Link</span></span>${G.out}</a>
     <div class="cell vin"><input id="vidUrl" type="url" inputmode="url" placeholder="2. Paste the link here" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" class="vpaste" id="vidPaste">Paste</button></div></div>
-  <div class="vbtn"><button type="button" class="big" id="vidSave">Use This Video</button></div>`
-  +(own?`<div class="group" style="margin-top:22px"><button type="button" class="cell danger" id="vidDel">${def?"Back to Default Video":"Remove My Video"}</button></div>`:"");}
+    <div class="vbtn"><button type="button" class="big" id="vidSave">Use This Video</button></div>
+    ${own?`<div class="group vbtn"><button type="button" class="cell danger" id="vidDel">${def?"Back to Default Video":"Remove My Video"}</button></div>`:""}
+    <div class="group vbtn"><button type="button" class="cell" id="vidClose" style="justify-content:center">Close</button></div></div>`;}
 function openSheet(id){closeMenu();$(id).classList.add("open");$("scrim").classList.add("open");document.body.style.overflow="hidden";}
 function closeSheets(){["sheet","settings","form","alts","vid"].forEach(id=>$(id).classList.remove("open"));$("vidBody").innerHTML="";$("scrim").classList.remove("open");document.body.style.overflow="";}
 const openLib=()=>openSheet("sheet");
@@ -535,7 +535,7 @@ new MutationObserver(()=>{if($("settings").classList.contains("open"))renderSett
 
 // ---------- events ----------
 document.addEventListener("click",ev=>{
-  if(ev.target.id==="scrim")return closeSheets();
+  if(ev.target.id==="scrim"||ev.target.id==="vid")return closeSheets();
   if(ev.target.id==="mscrim")return closeMenu();
   const t=ev.target.closest("button");if(!t)return;
   const ds=t.dataset;
@@ -561,6 +561,7 @@ document.addEventListener("click",ev=>{
   if(ds.f){S.filter=ds.f;renderLib();save();return;}
   if(ds.vid){openVid(ds.vid,ds.vq||"proper form");return;}
   if(t.id==="vidClose"){closeSheets();return;}
+  if(t.id==="vidMore"){const o=$("vidOpts").classList.toggle("show");t.setAttribute("aria-expanded",o);t.classList.toggle("on",o);if(o)setTimeout(()=>$("vidOpts").scrollIntoView({behavior:"smooth",block:"nearest"}),50);return;}
   if(t.id==="vidPaste"){(navigator.clipboard?.readText?navigator.clipboard.readText():Promise.reject()).then(x=>{$("vidUrl").value=x.trim();}).catch(()=>toast("Long-press the box and tap Paste"));return;}
   if(t.id==="vidSave"){const r=ytId($("vidUrl").value);if(!r)return toast("That isn't a YouTube link");S.vids[VID.n]=r;save();renderVid();toast("Video saved");return;}
   if(t.id==="vidDel"){delete S.vids[VID.n];save();renderVid();toast(S.defVids&&DEFVID[VID.n]?"Back to default video":"Video removed");return;}
