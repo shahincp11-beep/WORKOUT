@@ -461,3 +461,12 @@ nav button.on{color:var(--c)}
   .sheet.open{transform:translate(-50%,0)}
   .acbox{height:260px}
 }
+
+/* v3 in-app video player */
+.vframe{position:relative;width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#000;border:1px solid rgba(128,128,128,.2)}
+.vframe.sh{aspect-ratio:9/16;max-height:55vh;width:auto;margin:0 auto}
+.vframe iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vlink{color:inherit;text-decoration:none}.vlink>svg{width:16px;height:16px;flex:none;color:var(--tint)}
+.vin input{flex:1;min-width:0;background:none;border:0;color:var(--label,inherit);font:inherit;font-size:16px;padding:4px 0;outline:none}
+.vpaste{flex:none;padding:6px 12px;border-radius:999px;background:var(--fill2);color:var(--tint);font-size:15px;font-weight:600}
+.vbtn{margin-top:12px}

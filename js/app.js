@@ -33,7 +33,7 @@ function norm(){S.edit=false;S.view=null;S.look=S.look==="glass"?"dark":(S.look|
   for(const k of ["log","sessions","checkups","body"])S[k]=S[k]||[];
   S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";
   if(S.planVer!==2){S.plans=JSON.parse(JSON.stringify(DEFAULT));S.sets={};S.checks={};S.planVer=2;}
-  S.swaps=S.swaps||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
+  S.swaps=S.swaps||{};S.vids=S.vids||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
   DAYS=PROGRAMS[S.prog].days;S.day=Math.min(S.nextBy[S.prog]||0,DAYS.length-1);}
 function setProg(p){S.nextBy[S.prog]=S.day;S.prog=p;DAYS=PROGRAMS[p].days;S.day=Math.min(S.nextBy[p]||0,DAYS.length-1);S.view=null;S.edit=false;}
 const dayByKey=k=>ALLDAYS.find(d=>d.key===k);
@@ -169,8 +169,22 @@ function applyAccent(){const r=document.documentElement.style,A=S.accent;
 const PHOK={};let phT=0;
 Object.values(PH).forEach(u=>{const i=new Image();i.onload=()=>{PHOK[u]=1;clearTimeout(phT);phT=setTimeout(renderAll,60);};i.src=u;});
 const ph=k=>k&&PHOK[PH[k]]?new URL(PH[k],location.href).href:"";
+// ===== In-app video player (Phase 3) =====
+let VID=null;
+const ytId=x=>{x=(x||"").trim();const m=x.match(/(?:youtu\.be\/|[?&]v=|\/(?:shorts|embed|live|v)\/)([\w-]{11})/);if(m)return {id:m[1],sh:/\/shorts\//.test(x)};return /^[\w-]{11}$/.test(x)?{id:x,sh:false}:null;};
+const vidOf=n=>S.vids[n]||DEFVID[n]||null;
+function openVid(n,q){VID={n,q};renderVid();openSheet("vid");}
+function renderVid(){const {n,q}=VID,v=vidOf(n),own=!!S.vids[n],def=DEFVID[n];
+  $("vidTtl").textContent=n;$("vidSub").textContent=v?(own?"Your video":"Default video"):"No video yet";
+  $("vidBody").innerHTML=(v?`<div class="vframe${v.sh?" sh":""}"><iframe src="https://www.youtube-nocookie.com/embed/${v.id}?playsinline=1&autoplay=1&rel=0" title="${esc(n)} video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
+    :`<div class="card"><span class="ct"><span class="t1">No video chosen yet</span><span class="t2">Find one you like on YouTube, copy its link, then paste it below. From then on only that video plays here.</span></span></div>`)
+  +`<div class="lh">${v?"Change video":"Choose video"}</div><div class="group">
+    <a class="cell vlink" href="https://www.youtube.com/results?search_query=${encodeURIComponent(n+" "+q)}" target="_blank" rel="noopener"><span class="ct"><span class="t1">1. Find on YouTube</span><span class="t2">On the video you like, tap Share → Copy Link</span></span>${G.out}</a>
+    <div class="cell vin"><input id="vidUrl" type="url" inputmode="url" placeholder="2. Paste the link here" autocomplete="off" autocapitalize="off" spellcheck="false"><button type="button" class="vpaste" id="vidPaste">Paste</button></div></div>
+  <div class="vbtn"><button type="button" class="big" id="vidSave">Use This Video</button></div>`
+  +(own?`<div class="group" style="margin-top:22px"><button type="button" class="cell danger" id="vidDel">${def?"Back to Default Video":"Remove My Video"}</button></div>`:"");}
 function openSheet(id){closeMenu();$(id).classList.add("open");$("scrim").classList.add("open");document.body.style.overflow="hidden";}
-function closeSheets(){["sheet","settings","form","alts"].forEach(id=>$(id).classList.remove("open"));$("scrim").classList.remove("open");document.body.style.overflow="";}
+function closeSheets(){["sheet","settings","form","alts","vid"].forEach(id=>$(id).classList.remove("open"));$("vidBody").innerHTML="";$("scrim").classList.remove("open");document.body.style.overflow="";}
 const openLib=()=>openSheet("sheet");
 const G_BOOKS=sv('<path d="M5 20V5.5A1.5 1.5 0 0 1 6.5 4h1A1.5 1.5 0 0 1 9 5.5V20M9 20V8.5A1.5 1.5 0 0 1 10.5 7h1A1.5 1.5 0 0 1 13 8.5V20M14.6 8.6l1.5-.4a1.5 1.5 0 0 1 1.8 1l2.8 10M3.5 20h17"/>');
 const G_GEAR=sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',{w:1.8});
@@ -542,6 +556,11 @@ document.addEventListener("click",ev=>{
   if(ds.lk){S.look=ds.lk;applyLook();renderSettings();save();return;}
   if(ds.rest){const [k,v]=ds.rest.split(":");S.rest[k]=+v;renderSettings();save();return;}
   if(ds.f){S.filter=ds.f;renderLib();save();return;}
+  if(ds.vid){openVid(ds.vid,ds.vq||"proper form");return;}
+  if(t.id==="vidClose"){closeSheets();return;}
+  if(t.id==="vidPaste"){(navigator.clipboard?.readText?navigator.clipboard.readText():Promise.reject()).then(x=>{$("vidUrl").value=x.trim();}).catch(()=>toast("Long-press the box and tap Paste"));return;}
+  if(t.id==="vidSave"){const r=ytId($("vidUrl").value);if(!r)return toast("That isn't a YouTube link");S.vids[VID.n]=r;save();renderVid();toast("Video saved");return;}
+  if(t.id==="vidDel"){delete S.vids[VID.n];save();renderVid();toast(DEFVID[VID.n]?"Back to default video":"Video removed");return;}
   const p=S.view!=null?plan():null;
   if(ds.add){const n=ds.add,i=p.indexOf(n);if(i>=0)p.splice(i,1);else if(p.length<MAX)p.push(n);else return toast("You have 7. Remove one first.");renderAll();return;}
   if(ds.rm){p.splice(p.indexOf(ds.rm),1);const sw=S.swaps[D().key]||{};Object.keys(sw).forEach(o=>{if(sw[o]===ds.rm)delete sw[o];});renderAll();return;}
@@ -565,7 +584,7 @@ document.addEventListener("click",ev=>{
     case "copyReport":copyReport();break;
     case "exportData":exportData();break;
     case "resetAll":if(!resetArm){resetArm=true;renderSettings();setTimeout(()=>{resetArm=false;if($("settings").classList.contains("open"))renderSettings();},4000);}
-      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile,accent:S.accent};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
+      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile,accent:S.accent,vids:S.vids};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
       break;
   }
 });

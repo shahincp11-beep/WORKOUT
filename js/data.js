@@ -250,7 +250,9 @@ const G={
     legs:sv('<path d="M9 3v7l-3.2 5L9 21M15 3v7l3.2 5L15 21"/>',{w:2.2})
   }
 };
-const play=(n,extra="proper form",soft=false,img="")=>`<a class="play${soft?" soft":""}${img?" thumb":""}"${img?` style="--img:url(${img})"`:""} href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${n} ${extra} #shorts`)}" target="_blank" rel="noopener" aria-label="Watch how to do ${esc(n)}">${G.play}</a>`;
+// In-app video: tap play opens the player sheet. Default videos for must-do lifts; S.vids[name]={id,sh} overrides.
+const DEFVID={"Barbell bench press":{id:"gBZkSn-zsD0"}};
+const play=(n,extra="proper form",soft=false,img="")=>`<button type="button" class="play${soft?" soft":""}${img?" thumb":""}"${img?` style="--img:url(${img})"`:""} data-vid="${esc(n)}" data-vq="${esc(extra)}" aria-label="Watch how to do ${esc(n)}">${G.play}</button>`;
 const tierTag=t=>`<span class="tt ${t}">${t==="m"?G.star:""}${TIERS[t]}</span> · `;
 
 
