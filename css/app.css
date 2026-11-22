@@ -403,7 +403,7 @@ nav button.on{color:var(--c)}
 
 /* faded header photo */
 .hero{position:absolute;left:0;right:0;top:0;height:calc(340px + env(safe-area-inset-top,0px));z-index:-1;pointer-events:none;
-  background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,.5) 48%,var(--photo-fade) 100%),var(--hero) center 30%/cover no-repeat;opacity:0;transition:opacity .35s}
+  background:linear-gradient(180deg,rgba(0,0,0,.35) 0%,rgba(0,0,0,.5) 48%,var(--photo-fade) 100%),var(--hero) 68% 30%/cover no-repeat;opacity:0;transition:opacity .35s}
 :root[data-hero] .hero{opacity:1}
 :root[data-hero] .screen:not([hidden])>.top{padding-top:96px}
 :root[data-hero] .screen:not([hidden])>.top :is(.lt,.date,.dayno,.back){color:#fff;text-shadow:0 1px 12px rgba(0,0,0,.45)}
@@ -412,14 +412,14 @@ nav button.on{color:var(--c)}
 :root[data-hero] body::before{background:transparent}
 
 /* photo day cards */
-.dcard.ph{background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.42) 48%,rgba(0,0,0,.86) 100%),var(--img) center 30%/cover no-repeat #1c1c1e}
+.dcard.ph{background:linear-gradient(180deg,rgba(0,0,0,.08) 0%,rgba(0,0,0,.42) 48%,rgba(0,0,0,.86) 100%),var(--img) 70% 30%/cover no-repeat #1c1c1e}
 .dcard.ph .dt{color:#fff}.dcard.ph .dm{color:rgba(255,255,255,.74)}
 .dcard.ph .dn{color:#fff;opacity:.85}
 .dcard.ph .dic{background:rgba(0,0,0,.35);color:#fff;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);box-shadow:inset 0 0 0 .5px rgba(255,255,255,.25)}
 .dcard.ph .badge{background:var(--tintfill);color:var(--ontint)}
 
 /* exercise photo thumbnail with play */
-.play.thumb{width:52px;height:52px;border-radius:12px;background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),var(--img) center/cover #2c2c2e;color:#fff;position:relative}
+.play.thumb{width:52px;height:52px;border-radius:12px;background:linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)),var(--img) 70% 35%/cover #2c2c2e;color:#fff;position:relative}
 .play.thumb::after{content:"";position:absolute;inset:auto;width:26px;height:26px;border-radius:50%;background:var(--tintfill);left:13px;top:13px;z-index:0}
 .play.thumb svg{position:relative;z-index:1;width:12px;height:12px}
 .ex .play.thumb{width:52px;height:52px}
