@@ -250,7 +250,7 @@ const G={
     legs:sv('<path d="M9 3v7l-3.2 5L9 21M15 3v7l3.2 5L15 21"/>',{w:2.2})
   }
 };
-const play=(n,extra="proper form",soft=false)=>`<a class="play${soft?" soft":""}" href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${n} ${extra} #shorts`)}" target="_blank" rel="noopener" aria-label="Watch how to do ${esc(n)}">${G.play}</a>`;
+const play=(n,extra="proper form",soft=false,img="")=>`<a class="play${soft?" soft":""}${img?" thumb":""}"${img?` style="--img:url(${img})"`:""} href="https://www.youtube.com/results?search_query=${encodeURIComponent(`${n} ${extra} #shorts`)}" target="_blank" rel="noopener" aria-label="Watch how to do ${esc(n)}">${G.play}</a>`;
 const tierTag=t=>`<span class="tt ${t}">${t==="m"?G.star:""}${TIERS[t]}</span> · `;
 
 
@@ -274,3 +274,10 @@ Object.assign(G,{
   calendar:sv('<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',{w:2})
 });
 
+
+// ---------- photos (Phase 2) ----------
+const PH={cable:"img/workout-cable.jpg",bench:"img/upper-a-bench.jpg",squat:"img/lower-a-squat.jpg",pullup:"img/upper-b-pullup.jpg",rdl:"img/lower-b-rdl.jpg",
+  treadmill:"img/activity-treadmill.jpg",dumbbells:"img/health-dumbbells.jpg",press:"img/shoulder-press.jpg"};
+const DAYPH={ua:"bench",la:"squat",ub:"pullup",lb:"rdl",chest:"bench",back:"pullup",shoulders:"press",legs:"squat",push:"bench",pull:"pullup",plegs:"squat"};
+const GRPPH={Chest:"bench",Triceps:"bench",Back:"pullup",Biceps:"pullup","Rear delts & traps":"pullup",Shoulders:"press",Core:"cable",Quads:"squat",Calves:"squat",Hamstrings:"rdl",Glutes:"rdl"};
+const SCRPH={workout:"cable",activity:"treadmill",health:"dumbbells",insights:"press"};

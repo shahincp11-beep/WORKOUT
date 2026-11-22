@@ -28,7 +28,7 @@ function load(){let s=null,raw=null;try{raw=localStorage.getItem(KEY)}catch(e){}
   if(!s){let old=null;try{old=JSON.parse(localStorage.getItem("split4v2"))}catch(e){}
     s={day:old?.day||0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:old?.last||null,count:old?.count||0,log:old?.log||[],filter:"All"};}
   return s;}
-function norm(){S.edit=false;S.view=null;S.look=S.look||"auto";S.rest=S.rest||{main:90,other:60};
+function norm(){S.edit=false;S.view=null;S.look=S.look==="glass"?"dark":(S.look||"auto");S.rest=S.rest||{main:90,other:60};
   for(const k of ["sets","wts","checks","act","meals","protein","profile","plans"])S[k]=S[k]||{};
   for(const k of ["log","sessions","checkups","body"])S[k]=S[k]||[];
   S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";
@@ -157,8 +157,18 @@ function lineChart(pts,n,labels,c,fmt=v=>v){const W=320,H=136,T=16,B=22,L=4,Rr=4
 const sysDark=()=>{const h=document.documentElement.getAttribute("data-theme");return h?h==="dark":matchMedia("(prefers-color-scheme: dark)").matches;};
 function applyLook(){const L=S.look||"auto",root=document.documentElement;
   if(L==="auto")root.removeAttribute("data-look");else root.setAttribute("data-look",L);
-  const col={light:"#f2f2f7",dark:"#000000",glass:"#0b0b0c"};
+  const col={light:"#f2f2f7",dark:"#000000"};
   $$('meta[name="theme-color"]').forEach((m,i)=>m.setAttribute("content",L==="auto"?(i===0?"#f2f2f7":"#000000"):col[L]));}
+// accent colour: S.accent={c:[[h,l],[h,l]],fade,sel}; no S.accent = default red
+const hsl=([h,l])=>`hsl(${Math.round(h)} 100% ${Math.round(l)}%)`;
+function hex([h,l]){l/=100;const a=Math.min(l,1-l),f=n=>{const k=(n+h/30)%12;return Math.round(255*(l-a*Math.max(-1,Math.min(k-3,9-k,1)))).toString(16).padStart(2,"0");};return ("#"+f(0)+f(8)+f(4)).toUpperCase();}
+function applyAccent(){const r=document.documentElement.style,A=S.accent;
+  if(!A){r.removeProperty("--accent");r.removeProperty("--accent-fill");return;}
+  r.setProperty("--accent",hsl(A.c[0]));
+  if(A.fade)r.setProperty("--accent-fill",`linear-gradient(135deg,${hsl(A.c[0])},${hsl(A.c[1])})`);else r.removeProperty("--accent-fill");}
+const PHOK={};let phT=0;
+Object.values(PH).forEach(u=>{const i=new Image();i.onload=()=>{PHOK[u]=1;clearTimeout(phT);phT=setTimeout(renderAll,60);};i.src=u;});
+const ph=k=>k&&PHOK[PH[k]]?new URL(PH[k],location.href).href:"";
 function openSheet(id){closeMenu();$(id).classList.add("open");$("scrim").classList.add("open");document.body.style.overflow="hidden";}
 function closeSheets(){["sheet","settings","form","alts"].forEach(id=>$(id).classList.remove("open"));$("scrim").classList.remove("open");document.body.style.overflow="";}
 const openLib=()=>openSheet("sheet");
@@ -189,8 +199,10 @@ const TAB_TINT={activity:"--green",health:"--pink",insights:"--indigo"};
 function renderAll(){
   const scr=screenName();
   ["workout","day","activity","health","insights"].forEach(n=>{$("scr-"+n).hidden=n!==scr;});
-  const tint=scr==="day"?D().color:scr==="workout"?DAYS[S.day].color:TAB_TINT[scr];
-  document.documentElement.style.setProperty("--day",`var(${tint})`);
+  const tint=scr==="day"?D().color:scr==="workout"?DAYS[S.day].color:TAB_TINT[scr],root=document.documentElement;
+  root.style.setProperty("--day",`var(${tint})`);root.dataset.scr=scr;
+  const hero=ph(scr==="day"?DAYPH[D().key]:SCRPH[scr]);
+  if(hero){$("hero").style.setProperty("--hero",`url(${hero})`);root.dataset.hero="";}else root.removeAttribute("data-hero");
   const dateTxt=new Date().toLocaleDateString(undefined,{weekday:"long",day:"numeric",month:"long"});
   $$("[data-date]").forEach(e=>e.textContent=dateTxt);
   $$("[data-streak]").forEach(e=>{e.innerHTML=`${G.flame}<b>${S.count}</b>`;e.setAttribute("aria-label",`${S.count} workouts completed`);});
@@ -208,7 +220,8 @@ function renderHome(){
     +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div>`;
   $("progName").textContent=PROGRAMS[S.prog].name;$("days").classList.toggle("n3",DAYS.length===3);
   $("days").innerHTML=DAYS.map((d,i)=>{const st=dayStats(d),last=[...S.sessions].reverse().find(x=>x.k===d.key),prog=st.done&&st.done<st.total?` · ${st.done}/${st.total} done`:"";
-    return `<button class="dcard ${i===S.day?"next":""}" data-open="${i}" style="--c:var(${d.color})" aria-label="Day ${i+1}, ${dname(d)}${i===S.day?", up next":""}">
+    const im=ph(DAYPH[d.key]);
+    return `<button class="dcard ${i===S.day?"next":""} ${im?"ph":""}" data-open="${i}" style="--c:var(${d.color})${im?`;--img:url(${im})`:""}" aria-label="Day ${i+1}, ${dname(d)}${i===S.day?", up next":""}">
       ${i===S.day?'<span class="badge">Up next</span>':""}<span class="dic">${G.tab[d.icon]}</span><span class="dn">Day ${i+1}</span><span class="dt">${dname(d)}</span>
       <span class="dm">${st.p.length} exercises · ~${st.mins} min${prog}<br>${last?`Last done ${fmtD(last.d)}`:"Not done yet"}</span></button>`;}).join("");
   const rec=[...S.sessions].reverse().slice(0,6);
@@ -228,7 +241,7 @@ function renderDay(){
     const ess=isEss(k,n),tr=tierOf(k,n),complete=dn===ns;
     const lead=S.edit?(ess?`<span class="lockg" title="Must-do exercises stay in your plan">${G.lock}</span>`:`<button class="del" data-rm="${esc(n)}" aria-label="Remove ${esc(n)}">${G.minus}</button>`):"";
     return `<article class="ex ${complete?"done":""}"><div class="exh">${lead}<span class="tile" aria-hidden="true">${complete?G.check:i+1}</span>
-      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${exNotes(k,n,p)}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n)}</div>
+      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${exNotes(k,n,p)}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n,undefined,false,ph(GRPPH[e[1]]||DAYPH[k]))}</div>
       <div class="sets">${Array.from({length:ns},(_,j)=>`<button class="set ${j<dn?"on":""}" data-set="${esc(n)}" data-i="${j}" aria-label="Set ${j+1}${j<dn?", done":""}">${j+1}</button>`).join("")}
       <label class="kg"><input id="w-${k}-${i}" inputmode="decimal" placeholder="0" data-wt="${esc(n)}" value="${esc(S.wts[sk]||"")}" aria-label="Weight for ${esc(n)}"><span>kg</span></label></div></article>`}).join("")
     :`<div class="group">${emptyCell("No Exercises","Tap Shuffle Workout or Add Exercise.")}</div>`;
@@ -298,10 +311,11 @@ function renderActivity(){
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   if(!S.daily||S.daily.d!==today())S.daily={d:today(),h:{}};
   $("actBody").innerHTML=`
+  <section class="summary" aria-label="Today's activity">${rings([["Move",num(t.azm)||0,22,"ZONE MIN","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Steps",num(t.steps)||0,10000,"STEPS","--orange"]])}<div class="sumfoot"><span>Fitbit Air</span><span><b>${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</b></span></div></section>
   <div class="group"><div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--label2)">${G.band}</span><span class="ct"><span class="t1">Fitbit Air</span><span class="t2">${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</span></span><span class="st info">Manual</span></div>
     <button class="cell action" data-logact>${G.addRow}<span class="lbl">${hasToday?"Edit Today's Numbers":"Log Today's Numbers"}</span></button></div>
-  <section class="sec"><div class="sh"><h2>Today</h2><span class="hacc">${hasToday?"From Fitbit Air":"Tap a tile to log"}</span></div>
-    <div class="tiles">${MET.map(m=>{const v=num(t[m.k]);return `<button class="mt" data-logact style="--c:var(${m.c})"><span class="mk">${m.ic}${m.n}</span><span class="mv ${v==null?"none":""}">${v==null?"—":m.f(v)}${v!=null&&m.u?`<small>${m.u}</small>`:""}</span>${m.goal?`<span class="mg">Goal ${m.f(m.goal)}${m.u?" "+m.u:""}</span><span class="mbar"><i style="width:${v==null?0:Math.min(100,v/m.goal*100)}%"></i></span>`:`<span class="mg">${m.k==="rhr"?"Lower is fitter":"Higher means better recovery"}</span>`}</button>`}).join("")}</div></section>
+  <section class="sec"><div class="sh"><h2>Cardio Log</h2><span class="hacc">${weekCardio()} of 150 min this week</span></div>
+    <div class="group">${(()=>{const c=[...S.sessions].reverse().filter(x=>x.cm).slice(0,5);return c.length?c.map(x=>{const d=dayByKey(x.k);return `<div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--ring2)">${G.run}</span><span class="ct"><span class="t1">${x.cm} min cardio</span><span class="t2">After ${d?dname(d):"workout"}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span></div>`}).join(""):emptyCell("No cardio yet","Cardio you finish after a workout shows here.");})()}</div></section>
   <section class="sec"><div class="sh"><h2>Trends</h2></div>
     ${steps7.some(p=>p.v!=null)?`<div class="chart"><div class="chh"><b>Steps</b><span>avg ${Math.round(avg(steps7.map(p=>p.v))).toLocaleString()}</span></div>${barChart(steps7.map(p=>p.v),lab7,10000,"--orange",v=>v>=1000?Math.round(v/1000)+"k":v)}</div>`:""}
     ${rhr30.length?`<div class="chart"><div class="chh"><b>Resting Heart Rate</b><span>${rhr30.length>1?`${rhr30[rhr30.length-1].v-rhr30[0].v>0?"+":""}${rhr30[rhr30.length-1].v-rhr30[0].v} bpm in 30 days`:`${rhr30[0].v} bpm`}</span></div>${lineChart(rhr30,30,["30 days ago","Today"],"--red",v=>Math.round(v))}</div>`:""}
@@ -309,7 +323,7 @@ function renderActivity(){
     ${!steps7.some(p=>p.v!=null)&&!rhr30.length&&!sleep7.some(p=>p.v!=null)?`<div class="group">${emptyCell("No trends yet","Log your Fitbit Air numbers for a few days to see steps, resting heart rate and sleep charts.")}</div>`:""}
     <p class="gf">Resting heart rate slowly dropping over weeks is one of the clearest signs your heart health is improving.</p></section>
   <section class="sec"><div class="sh"><h2>Daily Habits</h2><span class="hacc">${n} of ${HABITS.length}</span></div>
-    <div class="group">${HABITS.map(h=>{const on=!!S.daily.h[h[0]];return `<button class="cell hab ${on?"on":""}" data-habit="${h[0]}" role="checkbox" aria-checked="${on}"><span class="itile" style="--ic:var(${h[2]})">${h[3]}</span><span class="ct"><span class="t1">${esc(h[1])}</span></span><span class="tick">${G.check}</span></button>`}).join("")}</div>
+    <div class="habchips">${HABITS.map(h=>{const on=!!S.daily.h[h[0]];return `<button class="hchip ${on?"on":""}" data-habit="${h[0]}" role="checkbox" aria-checked="${on}" style="--ic:var(${h[2]})">${on?G.check:h[3]}${esc(h[1])}</button>`}).join("")}</div>
     <p class="gf">These reset every morning. Fat loss comes mostly from food, steps and sleep.</p></section>`;
 }
 
@@ -352,6 +366,13 @@ const MEALS=[
   ["Dinner",["Baked salmon, sweet potato and broccoli","Lean beef stir-fry with vegetables and a little rice","Chicken tikka (yoghurt marinade), cauliflower rice, salad"],"35–45 g protein"],
   ["Evening (optional)",["Cottage cheese or a casein shake","Handful of walnuts and herbal tea","Skim milk with a spoon of peanut butter"],"10–25 g protein"]];
 function renderHealth(){
+  const t=actDay(today()),hasToday=Object.keys(t).length>0,sl=num(t.sleep);
+  $("healthTop").innerHTML=`<div class="card"><div class="chh"><b>Sleep</b><span>${sl!=null?`${r1(sl)} h`:"Not logged"}</span></div>
+    <div class="stages" aria-hidden="true">${sl!=null?`<i style="flex:${sl};background:var(--indigo)"></i>`:""}</div>
+    <span class="t2">Sleep stages (deep, light, REM, awake) appear here once Apple Health sync is added.</span></div>
+  <section class="sec"><div class="sh"><h2>Today</h2><span class="hacc">${hasToday?"From Fitbit Air":"Tap a tile to log"}</span></div>
+    <div class="tiles">${MET.map(m=>{const v=num(t[m.k]);return `<button class="mt" data-logact style="--c:var(${m.c})"><span class="mk">${m.ic}${m.n}</span><span class="mv ${v==null?"none":""}">${v==null?"—":m.f(v)}${v!=null&&m.u?`<small>${m.u}</small>`:""}</span>${m.goal?`<span class="mg">Goal ${m.f(m.goal)}${m.u?" "+m.u:""}</span><span class="mbar"><i style="width:${v==null?0:Math.min(100,v/m.goal*100)}%"></i></span>`:`<span class="mg">${m.k==="rhr"?"Lower is fitter":"Higher means better recovery"}</span>`}</button>`}).join("")}</div></section>
+`;
   $("hseg").innerHTML=[["checkups","Checkups"],["diet","Diet"]].map(([k,n])=>`<button class="${S.hseg===k?"on":""}" data-hseg="${k}" role="tab" aria-selected="${S.hseg===k}">${n}</button>`).join("");
   S.hseg==="diet"?renderDiet():renderCheckups();}
 function renderCheckups(){
@@ -448,6 +469,15 @@ async function copyReport(){const r=buildReport($("askQ")?.value);
   catch(e){if(S.tab!=="insights"){S.tab="insights";S.view=null;renderAll();}const b=$("reportBox");b.hidden=false;b.value=r;b.focus();b.select();toast("Select all and copy the report");}}
 
 // ---------- settings ----------
+function accentUI(){const A=S.accent,c=A?A.c[A.sel||0]:[3,61];
+  return `<div class="acp"><div class="acprev"><span class="acsw" aria-hidden="true"></span><span class="ct"><span class="t1">Preview</span><span class="achex" id="acHex">${A?hex(A.c[A.sel||0]):"Red (default)"}</span></span><span class="big" aria-hidden="true">Start</span></div>
+    <div class="acbox" id="acBox" role="slider" aria-label="Accent colour" aria-valuetext="${A?hex(c):"Red"}"><i class="acknob" id="acKnob" style="left:${c[0]/360*100}%;top:${(90-c[1])/70*100}%;--knob:${hsl(c)}"></i></div></div>`;}
+function pickAt(ev){const b=$("acBox").getBoundingClientRect(),x=Math.min(1,Math.max(0,(ev.clientX-b.left)/b.width)),y=Math.min(1,Math.max(0,(ev.clientY-b.top)/b.height));
+  if(!S.accent)S.accent={c:[[3,61],[35,55]],fade:false,sel:0};const c=[x*360,90-y*70];S.accent.c[S.accent.sel||0]=c;
+  const k=$("acKnob");k.style.left=x*100+"%";k.style.top=y*100+"%";k.style.setProperty("--knob",hsl(c));$("acHex").textContent=hex(c);applyAccent();}
+document.addEventListener("pointerdown",ev=>{if(ev.target.id!=="acBox")return;ev.preventDefault();ev.target.setPointerCapture(ev.pointerId);pickAt(ev);});
+document.addEventListener("pointermove",ev=>{if(ev.target.id==="acBox"&&ev.target.hasPointerCapture?.(ev.pointerId))pickAt(ev);});
+document.addEventListener("pointerup",ev=>{if(ev.target.id==="acBox"){save();renderSettings();}});
 function renderSettings(){
   const L=S.look||"auto",shown=L==="auto"?(sysDark()?"dark":"light"):L;
   const segRow=(label,key,vals)=>`<div class="cell"><span class="ct"><span class="t1">${label}</span></span><div class="seg sm" role="radiogroup" aria-label="${label}">${vals.map(v=>`<button class="${S.rest[key]===v?"on":""}" data-rest="${key}:${v}" role="radio" aria-checked="${S.rest[key]===v}">${v>=120?v/60+"m":v+"s"}</button>`).join("")}</div></div>`;
@@ -455,9 +485,15 @@ function renderSettings(){
     <div class="group" role="radiogroup" aria-label="Workout type">${Object.entries(PROGRAMS).map(([k,p])=>`<button class="cell prog ${S.prog===k?"on":""}" data-prog="${k}" role="radio" aria-checked="${S.prog===k}"><span class="ct"><span class="t1">${p.name}</span><span class="t2">${p.sub}</span></span><span class="tick">${G.check}</span></button>`).join("")}</div>
     <p class="lf">Each program keeps its own exercises, weights and progress, so you can switch back any time.</p>
     <div class="lh">Appearance</div>
-    <div class="group"><div class="looks" role="radiogroup" aria-label="Appearance">${[["light","Light"],["dark","Dark"],["glass","Transparent"]].map(([k,n])=>`<button class="look ${shown===k?"on":""}" data-lk="${k}" role="radio" aria-checked="${shown===k}"><span class="mini ${k}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>${n}</span><span class="lk-check" aria-hidden="true">${G.check}</span></button>`).join("")}</div>
+    <div class="group"><div class="looks" role="radiogroup" aria-label="Appearance">${[["light","Light"],["dark","Dark"]].map(([k,n])=>`<button class="look ${shown===k?"on":""}" data-lk="${k}" role="radio" aria-checked="${shown===k}"><span class="mini ${k}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>${n}</span><span class="lk-check" aria-hidden="true">${G.check}</span></button>`).join("")}</div>
     <label class="cell"><span class="ct"><span class="t1">Automatic</span></span><input type="checkbox" class="sw" id="autoLook" ${L==="auto"?"checked":""}></label></div>
-    <p class="lf">Automatic switches between Light and Dark with your iPhone. Transparent is frosted glass with a soft glow in each section's colour.</p>
+    <p class="lf">Automatic switches between Light and Dark with your iPhone.</p>
+    <div class="lh">Accent Colour</div>
+    <div class="group">${accentUI()}
+      <label class="cell"><span class="ct"><span class="t1">Fade</span><span class="t2">Blend two colours in buttons and fills</span></span><input type="checkbox" class="sw" id="acFade" ${S.accent?.fade?"checked":""}></label>
+      ${S.accent?.fade?`<div class="cell"><span class="ct"><span class="t1">Editing</span></span><div class="seg sm" role="radiogroup" aria-label="Fade colour">${["Colour 1","Colour 2"].map((n,i)=>`<button class="${(S.accent.sel||0)===i?"on":""}" data-acsel="${i}" role="radio" aria-checked="${(S.accent.sel||0)===i}">${n}</button>`).join("")}</div></div>`:""}
+      <button class="cell action" id="acReset" ${S.accent?"":"disabled style=\"opacity:.4\""}><span class="lbl">Reset to Red</span></button></div>
+    <p class="lf">Drag in the box to pick any colour. Buttons, rings and ticks change as you drag.</p>
     <div class="lh">Profile</div>
     <div class="group"><label class="cell field"><span class="t1">Age</span><input type="number" inputmode="numeric" id="pAge" data-prof="age" value="${esc(S.profile.age??"")}" placeholder="—"><span class="u">years</span></label>
       <label class="cell field"><span class="t1">Height</span><input type="number" inputmode="numeric" id="pHeight" data-prof="height" value="${esc(S.profile.height??"")}" placeholder="—"><span class="u">cm</span></label></div>
@@ -501,6 +537,8 @@ document.addEventListener("click",ev=>{
   if(ds.hseg){S.hseg=ds.hseg;renderAll();return;}
   if(ds.prot){const td=today();S.protein[td]=Math.max(0,(S.protein[td]||0)+(+ds.prot));renderAll();return;}
   if(ds.habit){if(!S.daily||S.daily.d!==today())S.daily={d:today(),h:{}};S.daily.h[ds.habit]=!S.daily.h[ds.habit];if(ds.habit==="protein"&&!S.daily.h.protein){}renderAll();return;}
+  if(ds.acsel!=null){S.accent.sel=+ds.acsel;renderSettings();save();return;}
+  if(t.id==="acReset"&&S.accent){delete S.accent;applyAccent();renderSettings();save();return;}
   if(ds.lk){S.look=ds.lk;applyLook();renderSettings();save();return;}
   if(ds.rest){const [k,v]=ds.rest.split(":");S.rest[k]=+v;renderSettings();save();return;}
   if(ds.f){S.filter=ds.f;renderLib();save();return;}
@@ -527,12 +565,13 @@ document.addEventListener("click",ev=>{
     case "copyReport":copyReport();break;
     case "exportData":exportData();break;
     case "resetAll":if(!resetArm){resetArm=true;renderSettings();setTimeout(()=>{resetArm=false;if($("settings").classList.contains("open"))renderSettings();},4000);}
-      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
+      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile,accent:S.accent};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
       break;
   }
 });
 document.addEventListener("change",ev=>{const el=ev.target;
   if(el.id==="importFile"){importData(el.files[0]);el.value="";return;}
+  if(el.id==="acFade"){if(!S.accent)S.accent={c:[[3,61],[35,55]],fade:false,sel:0};S.accent.fade=el.checked;S.accent.sel=el.checked?S.accent.sel||0:0;applyAccent();renderSettings();save();return;}
   if(el.id==="autoLook"){S.look=el.checked?"auto":(sysDark()?"dark":"light");applyLook();renderSettings();save();return;}
   if(el.id==="f_date"&&FORM?.onDate){FORM.onDate(el.value||today());return;}
   if(el.dataset.ck!==undefined){S.checks[el.dataset.ck]=el.checked;renderAll();return;}
@@ -559,6 +598,6 @@ function tick(){const ms=Math.max(0,end-Date.now()),left=Math.ceil(ms/1000);
   else $("irv").style.stroke="var(--tint)";}
 function stopRest(){clearInterval(timer);$("rest").hidden=true;}
 
-applyLook();
+applyLook();applyAccent();
 renderAll();
 if(LOADWARN)setTimeout(()=>toast(LOADWARN),600);
