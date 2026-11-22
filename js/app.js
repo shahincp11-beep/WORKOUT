@@ -172,9 +172,9 @@ const ph=k=>k&&PHOK[PH[k]]?new URL(PH[k],location.href).href:"";
 // ===== In-app video player (Phase 3) =====
 let VID=null;
 const ytId=x=>{x=(x||"").trim();const m=x.match(/(?:youtu\.be\/|[?&]v=|\/(?:shorts|embed|live|v)\/)([\w-]{11})/);if(m)return {id:m[1],sh:/\/shorts\//.test(x)};return /^[\w-]{11}$/.test(x)?{id:x,sh:false}:null;};
-const vidOf=n=>S.vids[n]||DEFVID[n]||null;
+const vidOf=n=>S.vids[n]||(S.defVids?DEFVID[n]:null)||null;
 function openVid(n,q){VID={n,q};renderVid();openSheet("vid");}
-function renderVid(){const {n,q}=VID,v=vidOf(n),own=!!S.vids[n],def=DEFVID[n];
+function renderVid(){const {n,q}=VID,v=vidOf(n),own=!!S.vids[n],def=S.defVids&&DEFVID[n];
   $("vidTtl").textContent=n;$("vidSub").textContent=v?(own?"Your video":"Default video"):"No video yet";
   $("vidBody").innerHTML=(v?`<div class="vframe${v.sh?" sh":""}"><iframe src="https://www.youtube-nocookie.com/embed/${v.id}?playsinline=1&autoplay=1&rel=0" title="${esc(n)} video" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>`
     :`<div class="card"><span class="ct"><span class="t1">No video chosen yet</span><span class="t2">Find one you like on YouTube, copy its link, then paste it below. From then on only that video plays here.</span></span></div>`)
@@ -512,6 +512,9 @@ function renderSettings(){
     <div class="group"><label class="cell field"><span class="t1">Age</span><input type="number" inputmode="numeric" id="pAge" data-prof="age" value="${esc(S.profile.age??"")}" placeholder="—"><span class="u">years</span></label>
       <label class="cell field"><span class="t1">Height</span><input type="number" inputmode="numeric" id="pHeight" data-prof="height" value="${esc(S.profile.height??"")}" placeholder="—"><span class="u">cm</span></label></div>
     <p class="lf">Used for your calorie target and the report for Claude. Weight comes from Health → Body.</p>
+    <div class="lh">Exercise Videos</div>
+    <div class="group"><label class="cell"><span class="ct"><span class="t1">Default Videos</span><span class="t2">Play a ready-chosen video for must-do exercises you haven't set yourself</span></span><input type="checkbox" class="sw" id="defVids" ${S.defVids?"checked":""}></label></div>
+    <p class="lf">Your own videos always come first. Choose one from any play button.</p>
     <div class="lh">Rest Timer</div>
     <div class="group">${segRow("Must-do lifts","main",[60,90,120])}${segRow("Other exercises","other",[45,60,90])}</div>
     <p class="lf">The timer starts by itself when you tick a set. Shorter rest keeps your heart rate up for fat loss.</p>
@@ -560,7 +563,7 @@ document.addEventListener("click",ev=>{
   if(t.id==="vidClose"){closeSheets();return;}
   if(t.id==="vidPaste"){(navigator.clipboard?.readText?navigator.clipboard.readText():Promise.reject()).then(x=>{$("vidUrl").value=x.trim();}).catch(()=>toast("Long-press the box and tap Paste"));return;}
   if(t.id==="vidSave"){const r=ytId($("vidUrl").value);if(!r)return toast("That isn't a YouTube link");S.vids[VID.n]=r;save();renderVid();toast("Video saved");return;}
-  if(t.id==="vidDel"){delete S.vids[VID.n];save();renderVid();toast(DEFVID[VID.n]?"Back to default video":"Video removed");return;}
+  if(t.id==="vidDel"){delete S.vids[VID.n];save();renderVid();toast(S.defVids&&DEFVID[VID.n]?"Back to default video":"Video removed");return;}
   const p=S.view!=null?plan():null;
   if(ds.add){const n=ds.add,i=p.indexOf(n);if(i>=0)p.splice(i,1);else if(p.length<MAX)p.push(n);else return toast("You have 7. Remove one first.");renderAll();return;}
   if(ds.rm){p.splice(p.indexOf(ds.rm),1);const sw=S.swaps[D().key]||{};Object.keys(sw).forEach(o=>{if(sw[o]===ds.rm)delete sw[o];});renderAll();return;}
@@ -591,6 +594,7 @@ document.addEventListener("click",ev=>{
 document.addEventListener("change",ev=>{const el=ev.target;
   if(el.id==="importFile"){importData(el.files[0]);el.value="";return;}
   if(el.id==="acFade"){if(!S.accent)S.accent={c:[[3,61],[35,55]],fade:false,sel:0};S.accent.fade=el.checked;S.accent.sel=el.checked?S.accent.sel||0:0;applyAccent();renderSettings();save();return;}
+  if(el.id==="defVids"){S.defVids=el.checked;renderSettings();save();return;}
   if(el.id==="autoLook"){S.look=el.checked?"auto":(sysDark()?"dark":"light");applyLook();renderSettings();save();return;}
   if(el.id==="f_date"&&FORM?.onDate){FORM.onDate(el.value||today());return;}
   if(el.dataset.ck!==undefined){S.checks[el.dataset.ck]=el.checked;renderAll();return;}
