@@ -6,7 +6,7 @@
 const APP = "https://shahincp11-beep.github.io";
 const APP_PAGE = APP + "/WORKOUT/";
 const API = "https://health.googleapis.com/v4/users/me";
-const SCOPES = ["activity_and_fitness", "health_metrics_and_measurements", "sleep", "profile", "settings", "nutrition", "location", "ecg", "irn"]
+const SCOPES = ["activity_and_fitness", "health_metrics_and_measurements", "sleep", "nutrition", "location"]
   .map(s => "https://www.googleapis.com/auth/googlehealth." + s + ".readonly");
 // Every data type listed in Google's docs; the probe shows which your account really offers.
 const TYPES = ["sleep", "steps", "distance", "floors", "altitude", "heart-rate", "daily-resting-heart-rate", "heart-rate-variability",
