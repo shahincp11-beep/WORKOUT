@@ -519,9 +519,7 @@ function renderSettings(){
     <div class="lh">Rest Timer</div>
     <div class="group">${segRow("Must-do lifts","main",[60,90,120])}${segRow("Other exercises","other",[45,60,90])}</div>
     <p class="lf">The timer starts by itself when you tick a set. Shorter rest keeps your heart rate up for fat loss.</p>
-    <div class="lh">Fitbit Air</div>
-    <div class="group"><div class="cell"><span class="ct"><span class="t1">Automatic sync</span><span class="t2">Not available yet</span></span></div></div>
-    <p class="lf">Google is replacing the Fitbit data API with the Google Health API, which only opens to apps after a Google privacy review. Until then, log your numbers in Activity.</p>
+    ${ghUI()}
     <div class="lh">Data</div>
     <div class="group"><button class="cell" id="exportData"><span class="ct"><span class="t1">Export Backup</span><span class="t2">Save all your data as a file</span></span></button>
       <label class="cell"><span class="ct"><span class="t1">Import Backup</span><span class="t2">Restore from a backup file</span></span><input type="file" id="importFile" accept=".json,application/json" hidden></label></div>
@@ -529,8 +527,8 @@ function renderSettings(){
     <div style="height:14px"></div>
     <div class="group"><button class="cell danger" id="resetAll">${resetArm?"Tap Again to Erase Everything":"Reset All Progress"}</button></div>
     <p class="lf">Erases workouts, weights, activity, checkups and diet logs on this phone. Your plan goes back to the default.</p>
-    <p class="ver">Four-Day Split · Version 1.3</p>`;}
-function openSettings(){renderSettings();openSheet("settings");}
+    <p class="ver">Four-Day Split · Version 1.4</p>`;}
+function openSettings(){renderSettings();openSheet("settings");ghStatus();}
 matchMedia("(prefers-color-scheme: dark)").addEventListener?.("change",()=>{if($("settings").classList.contains("open"))renderSettings();});
 new MutationObserver(()=>{if($("settings").classList.contains("open"))renderSettings();}).observe(document.documentElement,{attributes:true,attributeFilter:["data-theme"]});
 
