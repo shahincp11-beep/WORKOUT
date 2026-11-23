@@ -215,6 +215,29 @@ async function sync(tok, tz, days) {
   return out;
 }
 
+const MAPHOST = /(^|\.)(google\.[a-z.]+|goo\.gl|g\.co)$/i;
+function mapCoords(t) {
+  t = decodeURIComponent(t || "");
+  let m = t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || t.match(/[?&](?:q|ll|query|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || t.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
+  return m ? { lat: +m[1], lon: +m[2] } : null;
+}
+async function mapLink(link) {
+  let url;
+  try { url = new URL(link.trim()); } catch (e) { return { error: "That isn't a link" }; }
+  for (let i = 0; i < 6; i++) {
+    if (!MAPHOST.test(url.hostname)) return { error: "Please paste a Google Maps link" };
+    const c = mapCoords(url.href);
+    if (c && !/goo\.gl$/.test(url.hostname)) return { ...c, url: url.href, name: (url.pathname.match(/\/place\/([^/]+)/) || [])[1]?.replace(/\+/g, " ") };
+    const r = await fetch(url.href, { redirect: "manual", headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)", "Accept-Language": "en" } });
+    const loc = r.headers.get("Location");
+    if (loc) { url = new URL(loc, url); continue; }
+    const html = r.ok ? await r.text() : "", c2 = mapCoords(html);
+    const name = (html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/) || [])[1];
+    return c2 ? { ...c2, url: url.href, name } : { error: "No location found in that link", url: url.href, name };
+  }
+  return { error: "Too many redirects" };
+}
+
 export default {
   async fetch(req, env) {
     const u = new URL(req.url), p = u.pathname;
@@ -235,6 +258,9 @@ export default {
 
     if (!keyOk(req, env)) return json({ error: "Wrong app key" }, 401);
     const tz = u.searchParams.get("tz") || "Australia/Sydney";
+
+    // Gym location (Phase 4c): open a Google Maps share link and read the exact spot from it
+    if (p === "/api/maplink") return json(await mapLink(u.searchParams.get("u") || ""));
 
     if (p === "/auth/start" && req.method === "POST") {
       const st = rnd(); await env.GH.put("st:" + st, "1", { expirationTtl: 600 });

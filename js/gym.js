@@ -121,15 +121,25 @@ const gyPos=()=>new Promise((ok,no)=>navigator.geolocation?navigator.geolocation
 function gymSetUI(){const g=S.gym;const m=g&&g.lat!=null;
   const bb=m?`${g.lon-.004},${g.lat-.0025},${g.lon+.004},${g.lat+.0025}`:"";
   return `<div class="lh">Gym Mode</div><div class="group">
-    <div class="cell"><span class="itile" style="--ic:var(--tint)">${GPIN}</span><span class="ct"><span class="t1">Gym Location</span><span class="t2">${m?`Set · within ${g.r||150} m`:"Not set"}</span></span></div>
+    <div class="cell"><span class="itile" style="--ic:var(--tint)">${GPIN}</span><span class="ct"><span class="t1">Gym Location</span><span class="t2">${m?`${g.name?esc(g.name)+" · ":""}within ${g.r||150} m`:"Not set"}</span></span></div>
     ${m?`<div class="gymap"><iframe loading="lazy" title="Gym on the map" src="https://www.openstreetmap.org/export/embed.html?bbox=${bb}&layer=mapnik&marker=${g.lat},${g.lon}"></iframe></div>
     <div class="cell"><span class="ct"><span class="t1">Distance</span></span><div class="seg sm" role="radiogroup" aria-label="Distance">${[100,150,300].map(v=>`<button class="${(g.r||150)===v?"on":""}" data-gyrad="${v}">${v} m</button>`).join("")}</div></div>
     <label class="cell"><span class="ct"><span class="t1">Ask When I Arrive</span><span class="t2">Opening the app at the gym shows your four workouts</span></span><input type="checkbox" class="sw" id="gyAsk" ${g.ask!==false?"checked":""}></label>`:""}
+    <div class="cell gylink"><input id="gyLink" type="url" inputmode="url" placeholder="Paste a Google Maps link" autocomplete="off"><button class="gylb" id="gyLinkGo">Use Link</button></div>
     <button class="cell action" id="gyHereSet">${GPIN}<span class="lbl">${m?"Move to Where I Am Now":"Set to Where I Am Now"}</span></button>
     ${m?`<button class="cell action" id="gyDel" style="color:var(--red)"><span class="lbl">Remove Gym Location</span></button>`:""}</div>
-    <p class="lf">Tap “Set” once while you're at the gym. For a reminder even when the app is closed: Shortcuts → Automation → + → Arrive → pick your gym on the map → Show Notification “Gym time – open Workout”.</p>`;}
+    <p class="lf">Easiest: in Google Maps, open your gym → Share → Copy, then paste the link here. Or tap “Set” while you're at the gym. For a reminder even when the app is closed: Shortcuts → Automation → + → Arrive → pick your gym on the map → Show Notification “Gym time – open Workout”.</p>`;}
+function gyCoords(t){try{t=decodeURIComponent(t||"");}catch(e){}const m=t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||t.match(/[?&](?:q|ll|query|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)||t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/^\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*$/);return m?{lat:+m[1],lon:+m[2]}:null;}
+async function gymLink(){const t=($("gyLink")?.value||"").trim();if(!t)return toast("Paste a Google Maps link first");
+  let c=!/goo\.gl|g\.co\//.test(t)&&gyCoords(t),name=(t.match(/\/place\/([^/]+)/)||[])[1];
+  if(!c){if(!GH?.url)return toast("Set up Google Health sync first (Settings → Google Health)");toast("Reading the link…");
+    try{const j=await ghCall("/api/maplink?u="+encodeURIComponent(t));if(j.error||j.lat==null)return toast(j.error||"No location in that link");c=j;name=j.name||name;}
+    catch(e){return toast(/404|Not found|Server error/i.test(e.message)?"Update the sync server code in Cloudflare first":e.message);}}
+  try{name=name&&decodeURIComponent(name.replace(/\+/g," "));}catch(e){}
+  S.gym={...(S.gym||{}),lat:Math.round(c.lat*1e5)/1e5,lon:Math.round(c.lon*1e5)/1e5,name:name||"",r:S.gym?.r||150,ask:S.gym?.ask!==false,lastAsk:Date.now()};save();renderSettings();toast("Gym location saved");}
 document.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;
-  if(b.id==="gyHereSet"){toast("Finding your location…");try{const c=await gyPos();S.gym={...(S.gym||{}),lat:r1(c.latitude*1e4)/1e4,lon:r1(c.longitude*1e4)/1e4,r:S.gym?.r||150,ask:S.gym?.ask!==false,lastAsk:Date.now()};save();renderSettings();toast("Gym location saved");}catch(e){toast("Location not available – allow it in Settings → Privacy → Location");}}
+  if(b.id==="gyLinkGo")return gymLink();
+  if(b.id==="gyHereSet"){toast("Finding your location…");try{const c=await gyPos();S.gym={...(S.gym||{}),name:"",lat:Math.round(c.latitude*1e5)/1e5,lon:Math.round(c.longitude*1e5)/1e5,r:S.gym?.r||150,ask:S.gym?.ask!==false,lastAsk:Date.now()};save();renderSettings();toast("Gym location saved");}catch(e){toast("Location not available – allow it in Settings → Privacy → Location");}}
   if(b.id==="gyDel"){delete S.gym;save();renderSettings();toast("Gym location removed");}
   if(b.dataset.gyrad){S.gym.r=+b.dataset.gyrad;save();renderSettings();}
 });

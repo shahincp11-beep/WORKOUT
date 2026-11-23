@@ -602,3 +602,5 @@ body.gymon .island{top:calc(env(safe-area-inset-top,0px) + 66px)}
 .gyplay svg{width:34px;height:34px;margin-left:4px}.gyplab{font-weight:600;margin-bottom:6px}
 .gyex{display:flex;justify-content:center;align-items:baseline;gap:8px;margin-top:4px;color:rgba(235,235,245,.6);font-size:13px}
 .gyex b{font:600 17px var(--round);font-variant-numeric:tabular-nums;color:#fff}
+.gylink{gap:8px}.gylink input{flex:1;min-width:0;background:none;border:0;color:var(--label);font:inherit;font-size:16px;outline:none}
+.gylb{flex:none;height:32px;padding:0 14px;border-radius:999px;background:var(--tintfill);color:var(--ontint);font-weight:600;font-size:15px}
