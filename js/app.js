@@ -299,7 +299,7 @@ function completeWorkout(){
   p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;const rp=S.reps?.[k+"|"+n];if(rp&&rp.length)r[n]=rp.slice();const gt=S.gyT?.[k+"|"+n];if(gt&&gt.e)x[n]=Math.round((gt.e-gt.s)/6e3)/10;});
   const cm=cardioPending(k);
   if(cm){S.log=S.log.filter(x=>x.d>=daysAgo(60));S.log.push({d:today(),m:cm});}
-  const st=S.started&&S.started.k===k&&Date.now()-S.started.t<6*36e5?Math.round((Date.now()-S.started.t)/6e4):null;S.started=null;
+  const el=S.started?(S.started.p||Date.now())-S.started.t:0,st=S.started&&S.started.k===k&&el<6*36e5?Math.round(el/6e4):null;S.started=null;
   S.sessions.push({d:today(),k,done,total,cm,w,...(Object.keys(r).length?{r}:{}),...(Object.keys(x).length?{x}:{}),...(S.gyRd?{rd:S.gyRd}:{}),...(st?{mins:st}:{})});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
   S.last=`${dname(d)}, ${fmtD(today())}`;S.count++;clearProgress(k);S.day=(S.view+1)%DAYS.length;S.nextBy[S.prog]=S.day;S.view=null;S.edit=false;stopRest();
   renderAll();scrollTo({top:0});toast(`Workout saved. Next: ${DAYS[S.day].name[0]}`);}

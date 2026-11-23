@@ -221,19 +221,35 @@ function mapCoords(t) {
   let m = t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/) || t.match(/[?&](?:q|ll|query|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/) || t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/) || t.match(/\[null,null,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
   return m ? { lat: +m[1], lon: +m[2] } : null;
 }
+async function mapGeocode(q) {
+  if (!q) return null;
+  try {
+    const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=au&q=" + encodeURIComponent(q), { headers: { "User-Agent": "workout-sync/1.0 (personal fitness app)" } });
+    const j = await r.json(); return j[0] ? { lat: +j[0].lat, lon: +j[0].lon } : null;
+  } catch (e) { return null; }
+}
 async function mapLink(link) {
-  let url;
+  let url, name;
   try { url = new URL(link.trim()); } catch (e) { return { error: "That isn't a link" }; }
-  for (let i = 0; i < 6; i++) {
+  const H = { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1", "Accept-Language": "en-AU,en", "Cookie": "CONSENT=YES+cb; SOCS=CAI" };
+  for (let i = 0; i < 8; i++) {
+    if (/consent\.google/.test(url.hostname) && url.searchParams.get("continue")) { url = new URL(url.searchParams.get("continue")); continue; }
     if (!MAPHOST.test(url.hostname)) return { error: "Please paste a Google Maps link" };
+    name = name || (url.pathname.match(/\/place\/([^/]+)/) || [])[1]?.replace(/\+/g, " ") || url.searchParams.get("q") || url.searchParams.get("query") || undefined;
+    try { name = name && decodeURIComponent(name); } catch (e) {}
     const c = mapCoords(url.href);
-    if (c && !/goo\.gl$/.test(url.hostname)) return { ...c, url: url.href, name: (url.pathname.match(/\/place\/([^/]+)/) || [])[1]?.replace(/\+/g, " ") };
-    const r = await fetch(url.href, { redirect: "manual", headers: { "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)", "Accept-Language": "en" } });
+    if (c && !/goo\.gl$/.test(url.hostname)) return { ...c, url: url.href, name };
+    const r = await fetch(url.href, { redirect: "manual", headers: H });
     const loc = r.headers.get("Location");
     if (loc) { url = new URL(loc, url); continue; }
-    const html = r.ok ? await r.text() : "", c2 = mapCoords(html);
-    const name = (html.match(/<meta[^>]+property="og:title"[^>]+content="([^"]+)"/) || [])[1];
-    return c2 ? { ...c2, url: url.href, name } : { error: "No location found in that link", url: url.href, name };
+    const html = r.ok ? await r.text() : "";
+    let c2 = mapCoords(html);
+    const st = html.match(/APP_INITIALIZATION_STATE=\[\[\[-?[\d.]+,(-?\d+\.\d+),(-?\d+\.\d+)\]/);
+    if (!c2 && st) c2 = { lat: +st[2], lon: +st[1] };
+    name = name || (html.match(/<meta[^>]+(?:property|itemprop)="(?:og:title|name)"[^>]+content="([^"]+)"/) || [])[1]?.replace(/ · Google Maps$| - Google Maps$/, "");
+    if (c2 && !(c2.lat === 0 && c2.lon === 0)) return { ...c2, url: url.href, name };
+    const g = await mapGeocode(name);
+    return g ? { ...g, url: url.href, name, approx: 1 } : { error: "No location found in that link", url: url.href, name };
   }
   return { error: "Too many redirects" };
 }

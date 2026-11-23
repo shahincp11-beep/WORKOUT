@@ -580,7 +580,8 @@ body.gymon .island{top:calc(env(safe-area-inset-top,0px) + 66px)}
 @media (min-width:744px){.gpk{width:min(560px,100%)}.gpg{grid-template-columns:repeat(4,1fr)}.gpb{aspect-ratio:3/4}.gyp h2{font-size:38px}}
 /* floating timer */
 .gyhr{display:flex;gap:8px;align-items:center}#gyPip svg{width:18px;height:18px}
-#gyv{position:fixed;width:2px;height:2px;opacity:.01;left:0;bottom:0;pointer-events:none;z-index:-1}
+#gyv{position:fixed;width:160px;height:90px;left:-400px;top:0;pointer-events:none}
+body.gymon .toast{z-index:70}
 .gymini{position:fixed;z-index:19;display:flex;align-items:center;touch-action:none;transition:top .2s}
 .gymini.r{right:10px;flex-direction:row}.gymini.l{left:10px;flex-direction:row-reverse}
 .gmbox{width:152px;padding:10px 12px;border-radius:16px;background:rgba(28,28,30,.92);-webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);box-shadow:0 8px 28px rgba(0,0,0,.45),inset 0 0 0 .5px rgba(255,255,255,.14);color:#fff;display:flex;flex-direction:column;align-items:flex-start;text-align:left;line-height:1.2}
