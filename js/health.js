@@ -62,7 +62,7 @@ addEventListener("load", () => {
   const q = new URLSearchParams(location.search);
   if (q.has("sync")) { history.replaceState(null, "", location.pathname); setTimeout(() => hdSync(true), 400); }
   else setTimeout(hdAuto, 1200);
-  if (q.has("start")) { history.replaceState(null, "", location.pathname); setTimeout(hdStartPick, 500); }
+  if (q.has("start")) { history.replaceState(null, "", location.pathname); setTimeout(gymPick, 500); }
 });
 document.addEventListener("visibilitychange", () => { if (!document.hidden) hdAuto(); });
 setInterval(() => { if (!document.hidden && hdDue()) hdSync(false); }, 10 * 6e4);

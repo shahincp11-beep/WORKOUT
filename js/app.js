@@ -110,7 +110,7 @@ function autoPick(){const d=D();S.plans[d.key]=[];const p=plan();fillGaps();
   const left=shuffle(d.lib.map(e=>e[0]).filter(n=>!p.includes(n)));
   const rest=[...left.filter(n=>tierOf(d.key,n)==="r"),...left.filter(n=>tierOf(d.key,n)==="o")];while(p.length<TARGET&&rest.length)p.push(rest.shift());p.sort((a,b)=>rankIn(d,a)-rankIn(d,b));
   clearProgress(d.key);renderAll();toast("New workout, every area covered");}
-function clearProgress(k){Object.keys(S.sets).forEach(x=>x.startsWith(k+"|")&&delete S.sets[x]);Object.keys(S.checks).forEach(x=>x.startsWith(k)&&delete S.checks[x]);}
+function clearProgress(k){Object.keys(S.sets).forEach(x=>x.startsWith(k+"|")&&delete S.sets[x]);for(const o of [S.reps,S.gyT])if(o)Object.keys(o).forEach(x=>x.startsWith(k+"|")&&delete o[x]);Object.keys(S.checks).forEach(x=>x.startsWith(k)&&delete S.checks[x]);}
 const minsOf=x=>parseInt(x[2])||0;
 function cardioPending(k){let m=S.checks[k+"w0"]?minsOf(WARM[k][0]):0;FIN[k].forEach((f,i)=>{if(S.checks[k+"f"+i]&&f[4]!=="s")m+=minsOf(f)});return m;}
 const cardioGoal=k=>minsOf(WARM[k][0])+FIN[k].filter(f=>f[3]==="m"&&f[4]!=="s").reduce((a,f)=>a+minsOf(f),0);
@@ -232,7 +232,7 @@ function renderAll(){
 function renderHome(){
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   $("homeSum").innerHTML=rings([["Workouts",weekSessions(),4,"THIS WEEK","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Habits",n,HABITS.length,"TODAY","--ring3"]])
-    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div>`;
+    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div><button class="big gystart" id="gymStart">${G.play}Start Gym Mode</button>`;
   $("progName").textContent=PROGRAMS[S.prog].name;$("days").classList.toggle("n3",DAYS.length===3);
   $("days").innerHTML=DAYS.map((d,i)=>{const st=dayStats(d),last=[...S.sessions].reverse().find(x=>x.k===d.key),prog=st.done&&st.done<st.total?` · ${st.done}/${st.total} done`:"";
     const im=ph(DAYPH[d.key],true);
@@ -272,7 +272,7 @@ function renderDay(){
   const warmDone=WARM[k].filter((_,i)=>S.checks[k+"w"+i]).length;
   const ds0=dayStats(d),mins=ds0.mins;
   $("daySum").innerHTML=rings([["Sets",done,total,"SETS","--tint"],["Cardio",cardioPending(k),cardioGoal(k),"MIN","--ring2"],["Warm-up",warmDone,WARM[k].length,"DONE","--ring3"]])
-    +`<div class="sumfoot"><span>Warm-up <b>${ds0.warm}</b></span><span>Lifting <b>~${ds0.lift}</b></span><span>Cardio <b>${ds0.cardio}</b></span><span style="${mins>65?"color:var(--orange)":""}">= <b>${mins}</b> min</span></div>${mins>65?`<p class="gf" style="padding:0;color:var(--orange)">Longer than an hour. Short on time? Skip an optional exercise or cut the walk to 10 minutes.</p>`:""}`;
+    +`<div class="sumfoot"><span>Warm-up <b>${ds0.warm}</b></span><span>Lifting <b>~${ds0.lift}</b></span><span>Cardio <b>${ds0.cardio}</b></span><span style="${mins>65?"color:var(--orange)":""}">= <b>${mins}</b> min</span></div>${mins>65?`<p class="gf" style="padding:0;color:var(--orange)">Longer than an hour. Short on time? Skip an optional exercise or cut the walk to 10 minutes.</p>`:""}<button class="big gystart" id="gymHere">${G.play}${S.started&&S.started.k===k?"Resume Gym Mode":"Start Gym Mode"}</button>`;
   $("warmMin").textContent=ds0.warm+" min";$("cardMin").textContent=ds0.cardio+" min";
   $("cardNote").textContent=(S.prog==="ul"?"After every session: a steady incline walk. On rest days, a 30-minute brisk walk. ":"Intervals and steady Zone 2 walking both help heart health and fat loss. ")+"Keep any intervals at 70–80% effort until your doctor clears you for harder work. Stop if you feel chest pain, dizziness or unusual breathlessness.";
   const last=[...S.sessions].reverse().find(x=>x.k===k);
@@ -295,12 +295,12 @@ function renderLib(){
 }
 
 function completeWorkout(){
-  const d=D(),k=d.key,p=plan();let done=0,total=0;const w={};
-  p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;});
+  const d=D(),k=d.key,p=plan();let done=0,total=0;const w={},r={},x={};
+  p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;const rp=S.reps?.[k+"|"+n];if(rp&&rp.length)r[n]=rp.slice();const gt=S.gyT?.[k+"|"+n];if(gt&&gt.e)x[n]=Math.round((gt.e-gt.s)/6e3)/10;});
   const cm=cardioPending(k);
   if(cm){S.log=S.log.filter(x=>x.d>=daysAgo(60));S.log.push({d:today(),m:cm});}
   const st=S.started&&S.started.k===k&&Date.now()-S.started.t<6*36e5?Math.round((Date.now()-S.started.t)/6e4):null;S.started=null;
-  S.sessions.push({d:today(),k,done,total,cm,w,...(st?{mins:st}:{})});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
+  S.sessions.push({d:today(),k,done,total,cm,w,...(Object.keys(r).length?{r}:{}),...(Object.keys(x).length?{x}:{}),...(S.gyRd?{rd:S.gyRd}:{}),...(st?{mins:st}:{})});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
   S.last=`${dname(d)}, ${fmtD(today())}`;S.count++;clearProgress(k);S.day=(S.view+1)%DAYS.length;S.nextBy[S.prog]=S.day;S.view=null;S.edit=false;stopRest();
   renderAll();scrollTo({top:0});toast(`Workout saved. Next: ${DAYS[S.day].name[0]}`);}
 
@@ -518,6 +518,7 @@ function renderSettings(){
     <div class="group"><label class="cell field"><span class="t1">Age</span><input type="number" inputmode="numeric" id="pAge" data-prof="age" value="${esc(S.profile.age??"")}" placeholder="—"><span class="u">years</span></label>
       <label class="cell field"><span class="t1">Height</span><input type="number" inputmode="numeric" id="pHeight" data-prof="height" value="${esc(S.profile.height??"")}" placeholder="—"><span class="u">cm</span></label></div>
     <p class="lf">Used for your calorie target and the report for Claude. Weight comes from Health → Body.</p>
+    ${gymSetUI()}
     <div class="lh">Exercise Videos</div>
     <div class="group"><label class="cell"><span class="ct"><span class="t1">Default Videos</span><span class="t2">Play a ready-chosen video for must-do exercises you haven't set yourself</span></span><input type="checkbox" class="sw" id="defVids" ${S.defVids?"checked":""}></label></div>
     <p class="lf">Your own videos always come first. Choose one from any play button.</p>

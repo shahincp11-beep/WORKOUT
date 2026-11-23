@@ -27,3 +27,8 @@
 - `actDay(d)` = your manual log + Google values (Google wins, manual fills gaps).
 - Auto sync on open / return to app if older than ~1 h; `?sync=1` forces a sync, `?start=1` asks which workout (for iOS Shortcuts).
 - Reconnect pop-up when Google sign-in expires. Settings → Sync shows failed types and today's raw values.
+
+## Gym Mode (Phase 4c)
+- `js/gym.js` – arrival check (S.gym={lat,lon,r,ask,lastAsk}, Settings → Gym Mode), "You're at the gym" pop-up, readiness score + suggested load (gymReady: sleep 40, HRV 30, resting HR 20, recent workouts 10), four-workout picker, full-screen Gym Mode (one exercise per page, reps wheel, kg ±, Log Set → rest timer, swipe up).
+- Per set reps in S.reps, exercise times in S.gyT, last log S.gyLast. Session saves r (reps), x (minutes per exercise), rd (readiness), mins (from S.started).
+- Floating timer: img/gymclock.mp4 (silent 2-hour clock) shown in iOS picture-in-picture, seeked to elapsed time; returning to the app opens Gym Mode on the current exercise (S.gyFloat). In-app mini box #gymini with hide arrow (S.gymPos). sw.js never caches .mp4 (range requests).
