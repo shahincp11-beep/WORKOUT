@@ -479,3 +479,10 @@ nav button.on{color:var(--c)}
 .vin input{flex:1;min-width:0;background:none;border:0;color:inherit;font:inherit;font-size:16px;padding:4px 0;outline:none}
 .vpaste{flex:none;padding:6px 12px;border-radius:999px;background:var(--fill2);color:var(--tint);font-size:15px;font-weight:600}
 .vbtn{margin-top:12px}
+/* Phase 2b · look options + your photos */
+.phrow{width:100%;text-align:left}
+.phth{flex:none;width:44px;height:44px;border-radius:10px;background:var(--img) 70% 30%/cover no-repeat var(--fill2);display:grid;place-items:center;color:var(--label2);margin-right:12px}
+.phth svg{width:14px;height:14px}
+.phact{gap:8px;flex-wrap:wrap;padding-top:4px;padding-bottom:12px}
+.phb{flex:1 0 auto;height:34px;padding:0 12px;border-radius:9px;background:var(--fill2);color:var(--tint);font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+:root[data-scr="health"] .hero{background-position:0 0,68% 8%}

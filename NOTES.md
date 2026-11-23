@@ -5,6 +5,7 @@
 - `js/data.js` – exercise plans, programs, alternatives, warm-ups, icons. No user data.
 - `js/app.js` – state, safe save/load, backup export/import, screens, events, rest timer.
 - `img/` – compressed gym photos. Mapping in `js/data.js` (PH, DAYPH, GRPPH, SCRPH). Missing photos are skipped safely.
+- `js/photos.js` – Phase 2b: Look (S.phStyle clean/bg/full), your photos per slot (S.phx: c=yours, x=removed; JPEGs in IndexedDB `workout-photos`, also in backups as `photos`), photo-matched accent (S.matchPh, S.accent.ph=1). `ph(key,card)` decides what shows.
 - Accent colour: `S.accent={c:[[h,l],[h,l]],fade,sel}`; none = default red. CSS vars `--accent`, `--accent-fill` → `--tint`, `--tintfill`.
 - Old Transparent look (`S.look="glass"`) is migrated to Dark on load.
 - `sw.js` – offline cache. Bump `CACHE` and list any new file when files change.

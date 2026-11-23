@@ -33,7 +33,7 @@ function norm(){S.edit=false;S.view=null;S.look=S.look==="glass"?"dark":(S.look|
   for(const k of ["log","sessions","checkups","body"])S[k]=S[k]||[];
   S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";
   if(S.planVer!==2){S.plans=JSON.parse(JSON.stringify(DEFAULT));S.sets={};S.checks={};S.planVer=2;}
-  S.swaps=S.swaps||{};S.vids=S.vids||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
+  S.swaps=S.swaps||{};S.vids=S.vids||{};S.phx=S.phx||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
   DAYS=PROGRAMS[S.prog].days;S.day=Math.min(S.nextBy[S.prog]||0,DAYS.length-1);}
 function setProg(p){S.nextBy[S.prog]=S.day;S.prog=p;DAYS=PROGRAMS[p].days;S.day=Math.min(S.nextBy[p]||0,DAYS.length-1);S.view=null;S.edit=false;}
 const dayByKey=k=>ALLDAYS.find(d=>d.key===k);
@@ -47,7 +47,7 @@ function save(){try{const {edit,view,...keep}=S;const j=JSON.stringify(keep);loc
 let PERSIST=false;try{navigator.storage?.persist?.().then(ok=>{PERSIST=!!ok}).catch(()=>{})}catch(e){}
 
 // ---------- backup: export / import ----------
-function exportData(){const {edit,view,...keep}=S;const j=JSON.stringify({app:"workout",key:KEY,ver:1,saved:new Date().toISOString(),data:keep},null,1);
+function exportData(){const {edit,view,...keep}=S;const j=JSON.stringify({app:"workout",key:KEY,ver:1,saved:new Date().toISOString(),data:keep,photos:PHD},null,1);
   const name=`workout-backup-${today()}.json`,file=new File([j],name,{type:"application/json"});
   if(navigator.canShare?.({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{});return;}
   const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();
@@ -57,7 +57,8 @@ function importData(f){if(!f)return;const r=new FileReader();
     const d=o&&o.app==="workout"&&o.data&&typeof o.data==="object"?o.data:(o&&o.plans&&typeof o==="object"?o:null);
     if(!d){toast("That file isn't a Workout backup");return;}
     try{const {edit,view,...keep}=S;localStorage.setItem(KEY+"_preimport",JSON.stringify(keep))}catch(e){}
-    S=d;norm();save();closeSheets();renderAll();scrollTo({top:0});toast("Backup restored");};
+    S=d;norm();save();applyLook();applyAccent();closeSheets();renderAll();scrollTo({top:0});toast("Backup restored");
+    if(o.photos&&typeof o.photos==="object")Promise.all(Object.entries(o.photos).filter(([k,v])=>PH[k]&&/^data:image\//.test(v)).map(([k,v])=>phSave(k,v))).then(renderAll).catch(()=>toast("Some photos couldn't be restored"));};
   r.onerror=()=>toast("Couldn't read that file");r.readAsText(f);}
 let resetArm=false;
 
@@ -168,7 +169,6 @@ function applyAccent(){const r=document.documentElement.style,A=S.accent;
   if(A.fade)r.setProperty("--accent-fill",`linear-gradient(135deg,${hsl(A.c[0])},${hsl(A.c[1])})`);else r.removeProperty("--accent-fill");}
 const PHOK={};let phT=0;
 Object.values(PH).forEach(u=>{const i=new Image();i.onload=()=>{PHOK[u]=1;clearTimeout(phT);phT=setTimeout(renderAll,60);};i.src=u;});
-const ph=k=>k&&PHOK[PH[k]]?new URL(PH[k],location.href).href:"";
 // ===== In-app video player (Phase 3) =====
 let VID=null;
 const ytId=x=>{x=(x||"").trim();const m=x.match(/(?:youtu\.be\/|[?&]v=|\/(?:shorts|embed|live|v)\/)([\w-]{11})/);if(m)return {id:m[1],sh:/\/shorts\//.test(x)};return /^[\w-]{11}$/.test(x)?{id:x,sh:false}:null;};
@@ -234,7 +234,7 @@ function renderHome(){
     +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div>`;
   $("progName").textContent=PROGRAMS[S.prog].name;$("days").classList.toggle("n3",DAYS.length===3);
   $("days").innerHTML=DAYS.map((d,i)=>{const st=dayStats(d),last=[...S.sessions].reverse().find(x=>x.k===d.key),prog=st.done&&st.done<st.total?` · ${st.done}/${st.total} done`:"";
-    const im=ph(DAYPH[d.key]);
+    const im=ph(DAYPH[d.key],true);
     return `<button class="dcard ${i===S.day?"next":""} ${im?"ph":""}" data-open="${i}" style="--c:var(${d.color})${im?`;--img:url(${im})`:""}" aria-label="Day ${i+1}, ${dname(d)}${i===S.day?", up next":""}">
       ${i===S.day?'<span class="badge">Up next</span>':""}<span class="dic">${G.tab[d.icon]}</span><span class="dn">Day ${i+1}</span><span class="dt">${dname(d)}</span>
       <span class="dm">${st.p.length} exercises · ~${st.mins} min${prog}<br>${last?`Last done ${fmtD(last.d)}`:"Not done yet"}</span></button>`;}).join("");
@@ -255,7 +255,7 @@ function renderDay(){
     const ess=isEss(k,n),tr=tierOf(k,n),complete=dn===ns;
     const lead=S.edit?(ess?`<span class="lockg" title="Must-do exercises stay in your plan">${G.lock}</span>`:`<button class="del" data-rm="${esc(n)}" aria-label="Remove ${esc(n)}">${G.minus}</button>`):"";
     return `<article class="ex ${complete?"done":""}"><div class="exh">${lead}<span class="tile" aria-hidden="true">${complete?G.check:i+1}</span>
-      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${exNotes(k,n,p)}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n,undefined,false,ph(GRPPH[e[1]]||DAYPH[k]))}</div>
+      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${exNotes(k,n,p)}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n,undefined,false,ph(GRPPH[e[1]]||DAYPH[k],true))}</div>
       <div class="sets">${Array.from({length:ns},(_,j)=>`<button class="set ${j<dn?"on":""}" data-set="${esc(n)}" data-i="${j}" aria-label="Set ${j+1}${j<dn?", done":""}">${j+1}</button>`).join("")}
       <label class="kg"><input id="w-${k}-${i}" inputmode="decimal" placeholder="0" data-wt="${esc(n)}" value="${esc(S.wts[sk]||"")}" aria-label="Weight for ${esc(n)}"><span>kg</span></label></div></article>`}).join("")
     :`<div class="group">${emptyCell("No Exercises","Tap Shuffle Workout or Add Exercise.")}</div>`;
@@ -484,10 +484,10 @@ async function copyReport(){const r=buildReport($("askQ")?.value);
 
 // ---------- settings ----------
 function accentUI(){const A=S.accent,c=A?A.c[A.sel||0]:[3,61];
-  return `<div class="acp"><div class="acprev"><span class="acsw" aria-hidden="true"></span><span class="ct"><span class="t1">Preview</span><span class="achex" id="acHex">${A?hex(A.c[A.sel||0]):"Red (default)"}</span></span><span class="big" aria-hidden="true">Start</span></div>
+  return `<div class="acp"><div class="acprev"><span class="acsw" aria-hidden="true"></span><span class="ct"><span class="t1">Preview</span><span class="achex" id="acHex">${A?hex(A.c[A.sel||0])+(A.ph?" · from photo":""):"Red (default)"}</span></span><span class="big" aria-hidden="true">Start</span></div>
     <div class="acbox" id="acBox" role="slider" aria-label="Accent colour" aria-valuetext="${A?hex(c):"Red"}"><i class="acknob" id="acKnob" style="left:${c[0]/360*100}%;top:${(90-c[1])/70*100}%;--knob:${hsl(c)}"></i></div></div>`;}
 function pickAt(ev){const b=$("acBox").getBoundingClientRect(),x=Math.min(1,Math.max(0,(ev.clientX-b.left)/b.width)),y=Math.min(1,Math.max(0,(ev.clientY-b.top)/b.height));
-  if(!S.accent)S.accent={c:[[3,61],[35,55]],fade:false,sel:0};const c=[x*360,90-y*70];S.accent.c[S.accent.sel||0]=c;
+  if(!S.accent)S.accent={c:[[3,61],[35,55]],fade:false,sel:0};const c=[x*360,90-y*70];S.accent.c[S.accent.sel||0]=c;delete S.accent.ph;
   const k=$("acKnob");k.style.left=x*100+"%";k.style.top=y*100+"%";k.style.setProperty("--knob",hsl(c));$("acHex").textContent=hex(c);applyAccent();}
 document.addEventListener("pointerdown",ev=>{if(ev.target.id!=="acBox")return;ev.preventDefault();ev.target.setPointerCapture(ev.pointerId);pickAt(ev);});
 document.addEventListener("pointermove",ev=>{if(ev.target.id==="acBox"&&ev.target.hasPointerCapture?.(ev.pointerId))pickAt(ev);});
@@ -502,6 +502,7 @@ function renderSettings(){
     <div class="group"><div class="looks" role="radiogroup" aria-label="Appearance">${[["light","Light"],["dark","Dark"]].map(([k,n])=>`<button class="look ${shown===k?"on":""}" data-lk="${k}" role="radio" aria-checked="${shown===k}"><span class="mini ${k}" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>${n}</span><span class="lk-check" aria-hidden="true">${G.check}</span></button>`).join("")}</div>
     <label class="cell"><span class="ct"><span class="t1">Automatic</span></span><input type="checkbox" class="sw" id="autoLook" ${L==="auto"?"checked":""}></label></div>
     <p class="lf">Automatic switches between Light and Dark with your iPhone.</p>
+    ${lookUI()}
     <div class="lh">Accent Colour</div>
     <div class="group">${accentUI()}
       <label class="cell"><span class="ct"><span class="t1">Fade</span><span class="t2">Blend two colours in buttons and fills</span></span><input type="checkbox" class="sw" id="acFade" ${S.accent?.fade?"checked":""}></label>
@@ -588,7 +589,7 @@ document.addEventListener("click",ev=>{
     case "copyReport":copyReport();break;
     case "exportData":exportData();break;
     case "resetAll":if(!resetArm){resetArm=true;renderSettings();setTimeout(()=>{resetArm=false;if($("settings").classList.contains("open"))renderSettings();},4000);}
-      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile,accent:S.accent,vids:S.vids};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
+      else{resetArm=false;const keep={look:S.look,rest:S.rest,profile:S.profile,accent:S.accent,vids:S.vids,phx:S.phx,phStyle:S.phStyle,matchPh:S.matchPh};S={day:0,plans:JSON.parse(JSON.stringify(DEFAULT)),sets:{},wts:{},checks:{},last:null,count:0,log:[],filter:"All",...keep};norm();stopRest();closeSheets();renderAll();scrollTo({top:0});toast("All progress erased");}
       break;
   }
 });
@@ -622,6 +623,6 @@ function tick(){const ms=Math.max(0,end-Date.now()),left=Math.ceil(ms/1000);
   else $("irv").style.stroke="var(--tint)";}
 function stopRest(){clearInterval(timer);$("rest").hidden=true;}
 
-applyLook();applyAccent();
+applyLook();applyAccent();phLoad().then(()=>{if(Object.keys(PHD).length)renderAll();});
 renderAll();
 if(LOADWARN)setTimeout(()=>toast(LOADWARN),600);
