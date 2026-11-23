@@ -21,3 +21,9 @@
 
 ## Branches
 - `main` and `gh-pages` are kept identical.
+
+## Google Health data (Phase 4b)
+- `js/health.js` – sync (`/api/sync?days=`), stores Google data in localStorage `workout_health` (HD: days, sleep, ex, weight, hrToday, stepsToday), never deletes older days; in backups as `health`.
+- `actDay(d)` = your manual log + Google values (Google wins, manual fills gaps).
+- Auto sync on open / return to app if older than ~1 h; `?sync=1` forces a sync, `?start=1` asks which workout (for iOS Shortcuts).
+- Reconnect pop-up when Google sign-in expires. Settings → Sync shows failed types and today's raw values.

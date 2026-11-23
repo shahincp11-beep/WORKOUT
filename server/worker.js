@@ -89,13 +89,129 @@ async function test(tok, tz) {
 
 async function probe(tok) {
   const one = async t => {
-    const r = await gget(tok, `/dataTypes/${t}/dataPoints?pageSize=1`);
+    const r = await gget(tok, `/dataTypes/${t}/dataPoints?pageSize=${t === "sleep" || t === "exercise" ? 5 : 1}`);
     if (r.s === 200) { const dp = (r.j.dataPoints || [])[0]; return { t, st: dp ? "data" : "empty", latest: dp ? when(dp) : null, fields: dp ? Object.keys(val(dp, t)) : [] }; }
     return { t, st: r.s === 403 ? "denied" : r.s === 404 || r.s === 400 ? "na" : "err", msg: (r.j.error?.message || "HTTP " + r.s).slice(0, 140) };
   };
   const types = await Promise.all(TYPES.map(one));
   const extra = await Promise.all(["/profile", "/settings", "/pairedDevices"].map(async p => { const r = await gget(tok, p); return { t: p.slice(1), st: r.s === 200 ? "data" : r.s === 403 ? "denied" : "err", fields: r.s === 200 ? Object.keys(r.j) : [], devices: p === "/pairedDevices" ? (r.j.pairedDevices || []).map(d => d.displayName || d.deviceName || d.name) : undefined }; }));
   return { types, extra };
+}
+
+// ---------- Phase 4b: full sync ----------
+// Returns compact day-by-day data the app stores on the device. ~30 Google calls (free-plan limit is 50).
+const ymdOf = o => o && o.year ? `${o.year}-${String(o.month).padStart(2, "0")}-${String(o.day).padStart(2, "0")}` : null;
+const civ = d => { const [y, m, dd] = d.split("-").map(Number); return { date: { year: y, month: m, day: dd } }; };
+const addD = (d, n) => { const t = new Date(d + "T12:00:00Z"); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
+const N = v => v == null || v === "" || isNaN(+v) ? null : +v;
+const secs = v => typeof v === "string" && /s$/.test(v) ? Math.round(parseFloat(v)) : N(v);
+// Flatten a roll-up value to { "countSum": 123, "x.y": 4 } – field names vary, the app picks what it needs.
+function flat(o, pre = "", out = {}) {
+  if (!o || typeof o !== "object") return out;
+  for (const [k, v] of Object.entries(o)) {
+    const key = pre ? pre + "." + k : k;
+    if (Array.isArray(v)) v.forEach((x, i) => { const tag = x && (x.heartRateZoneType || x.heartRateZone || x.activityLevel || x.activityLevelType || x.type); flat(x, key + "." + (tag || i), out); });
+    else if (v && typeof v === "object") flat(v, key, out);
+    else if (typeof v === "string" && /^-?\d+(\.\d+)?s$/.test(v)) out[key] = secs(v);
+    else if (N(v) != null && typeof v !== "boolean") out[key] = N(v);
+    else if (typeof v === "string") out[key] = v;
+  }
+  return out;
+}
+async function gpost(tok, path, body) {
+  const r = await fetch(API + path, { method: "POST", headers: { Authorization: "Bearer " + tok, "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  return { s: r.status, j: await r.json().catch(() => ({})) };
+}
+const errOf = r => r.j.error?.message?.slice(0, 120) || "HTTP " + r.s;
+async function listAll(tok, type, filter, size, max = 4) {
+  let pt = "", out = [], n = 0, err = null;
+  do {
+    const r = await gget(tok, `/dataTypes/${type}/dataPoints?pageSize=${size}${filter ? "&filter=" + encodeURIComponent(filter) : ""}${pt ? "&pageToken=" + encodeURIComponent(pt) : ""}`);
+    if (r.s !== 200) { err = errOf(r); break; }
+    out.push(...(r.j.dataPoints || [])); pt = r.j.nextPageToken || ""; n++;
+  } while (pt && n < max);
+  return { pts: out, err };
+}
+// Daily roll-ups: { date: flatValues }
+async function daily(tok, type, from, to) {
+  const lim = ["heart-rate", "active-minutes", "total-calories", "calories-in-heart-rate-zone"].includes(type) ? 14 : 90, res = {};
+  const chunks = []; for (let a = from; a < to; a = addD(a, lim)) chunks.push([a, addD(a, lim) < to ? addD(a, lim) : to]);
+  const rs = await Promise.all(chunks.map(([a, b]) => gpost(tok, `/dataTypes/${type}/dataPoints:dailyRollUp`, { range: { start: civ(a), end: civ(b) }, windowSizeDays: 1, pageSize: lim })));
+  for (const r of rs) {
+    if (r.s !== 200) return { err: errOf(r) };
+    for (const p of r.j.rollupDataPoints || []) {
+      const d = ymdOf(p.civilStartTime?.date || p.civilStartTime), v = Object.entries(p).find(([k]) => !/^civil/.test(k));
+      if (d && v) res[d] = flat(v[1]);
+    }
+  }
+  return { res };
+}
+// Today in 15-min (heart rate) or 1-hour (steps) buckets
+async function intraday(tok, type, startIso, win) {
+  const r = await gpost(tok, `/dataTypes/${type}/dataPoints:rollUp`, { range: { startTime: startIso, endTime: new Date().toISOString() }, windowSize: win + "s", pageSize: 200 });
+  if (r.s !== 200) return { err: errOf(r) };
+  return { res: (r.j.rollupDataPoints || []).map(p => { const v = Object.entries(p).find(([k]) => !/Time$/.test(k)); return [p.startTime, v ? flat(v[1]) : {}]; }) };
+}
+// Midnight today in your time zone, as a UTC timestamp
+function midnight(tz) {
+  const now = new Date(), d = day(now.toISOString(), tz);
+  const off = new Date(now.toLocaleString("en-US", { timeZone: tz })) - new Date(now.toLocaleString("en-US", { timeZone: "UTC" }));
+  return new Date(Date.parse(d + "T00:00:00Z") - off).toISOString();
+}
+
+async function sync(tok, tz, days) {
+  const to = addD(day(new Date().toISOString(), tz), 1), from = addD(to, -days), errs = {}, out = { from, to: addD(to, -1), days: {} };
+  const put = (d, k, v) => { if (d && v != null) (out.days[d] ||= {})[k] = v; };
+  const ROLL = ["steps", "distance", "total-calories", "active-energy-burned", "active-zone-minutes", "active-minutes", "heart-rate",
+    "sedentary-period", "activity-level", "time-in-heart-rate-zone", "swim-lengths-data"];
+  const DAILY = { "daily-resting-heart-rate": v => ({ rhr: N(v.beatsPerMinute) }),
+    "daily-heart-rate-variability": v => ({ hrv: N(v.averageHeartRateVariabilityMilliseconds), hrvDeep: N(v.deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds), nremHr: N(v.nonRemHeartRateBeatsPerMinute) }),
+    "daily-oxygen-saturation": v => ({ spo2: N(v.averagePercentage), spo2Lo: N(v.lowerBoundPercentage), spo2Hi: N(v.upperBoundPercentage) }),
+    "daily-respiratory-rate": v => ({ br: N(v.breathsPerMinute) }),
+    "daily-sleep-temperature-derivations": v => ({ temp: N(v.nightlyTemperatureCelsius), tempBase: N(v.baselineTemperatureCelsius) }),
+    "daily-heart-rate-zones": v => ({ zones: (v.heartRateZones || []).map(z => [z.heartRateZoneType, N(z.minBeatsPerMinute), N(z.maxBeatsPerMinute)]) }) };
+  const mid = midnight(tz);
+  const [roll, dl, sl, ex, wt, ht, hrT, stT, dev] = await Promise.all([
+    Promise.all(ROLL.map(t => daily(tok, t, from, to))),
+    Promise.all(Object.keys(DAILY).map(t => listAll(tok, t, `${camel(t)}.date >= "${from}"`, 1000, 1))),
+    listAll(tok, "sleep", `sleep.interval.civil_end_time >= "${from}"`, 25, 3),
+    listAll(tok, "exercise", `exercise.interval.civil_start_time >= "${from}"`, 25, 3),
+    listAll(tok, "weight", "", 60, 1),
+    listAll(tok, "height", "", 1, 1),
+    intraday(tok, "heart-rate", mid, 900),
+    intraday(tok, "steps", mid, 3600),
+    gget(tok, "/pairedDevices")]);
+  ROLL.forEach((t, i) => { const r = roll[i]; if (r.err) errs[t] = r.err; else for (const [d, v] of Object.entries(r.res)) put(d, "r_" + camel(t), v); });
+  Object.entries(DAILY).forEach(([t, f], i) => {
+    const r = dl[i]; if (r.err) { errs[t] = r.err; return; }
+    for (const dp of r.pts) { const v = val(dp, t), d = ymdOf(v.date); if (d) for (const [k, x] of Object.entries(f(v))) put(d, k, x); }
+  });
+  if (sl.err) errs.sleep = sl.err;
+  out.sleep = sl.pts.map(dp => {
+    const v = val(dp, "sleep"), iv = v.interval || {}, sm = v.summary || {}, st = {};
+    for (const x of sm.stagesSummary || []) if (x.type) st[x.type] = N(x.minutes);
+    const t0 = Date.parse(iv.startTime);
+    return { end: (iv.civilEndTime ? ymdOf(iv.civilEndTime.date) : null) || day(iv.endTime, tz), start: iv.startTime, stop: iv.endTime, type: v.type,
+      nap: !!v.metadata?.nap, main: v.metadata?.mainSleep !== false, asleep: N(sm.minutesAsleep), awake: N(sm.minutesAwake), inBed: N(sm.minutesInSleepPeriod),
+      toSleep: N(sm.minutesToFallAsleep), afterWake: N(sm.minutesAfterWakeUp), stages: st,
+      tl: (v.stages || []).map(x => [x.type?.[0], Math.round((Date.parse(x.startTime) - t0) / 6e4), Math.round((Date.parse(x.endTime) - Date.parse(x.startTime)) / 6e4)]) };
+  }).filter(s => s.start);
+  if (ex.err) errs.exercise = ex.err;
+  out.ex = ex.pts.map(dp => {
+    const v = val(dp, "exercise"), iv = v.interval || {}, m = v.metricsSummary || {}, z = m.heartRateZoneDurations || {};
+    return { start: iv.startTime, stop: iv.endTime, type: v.exerciseType, name: v.displayName || "", dur: secs(v.activeDuration),
+      kcal: N(m.caloriesKcal), km: N(m.distanceMillimeters) != null ? N(m.distanceMillimeters) / 1e6 : null, steps: N(m.steps), hr: N(m.averageHeartRateBeatsPerMinute),
+      azm: N(m.activeZoneMinutes), pace: N(m.averagePaceSecondsPerMeter), elev: N(m.elevationGainMillimeters) != null ? N(m.elevationGainMillimeters) / 1000 : null,
+      zones: [secs(z.lightTime), secs(z.moderateTime), secs(z.vigorousTime), secs(z.peakTime)] };
+  }).filter(e => e.start);
+  if (wt.err) errs.weight = wt.err;
+  out.weight = wt.pts.map(dp => { const v = val(dp, "weight"), t = v.sampleTime || {}; return [t.civilTime ? ymdOf(t.civilTime.date) : day(t.physicalTime, tz), N(v.weightGrams) / 1000]; }).filter(x => x[0] && x[1]);
+  const h = ht.pts[0] && val(ht.pts[0], "height"); out.heightCm = h ? N(h.heightMillimeters) / 10 : null;
+  if (hrT.err) errs.hrToday = hrT.err; else out.hrToday = hrT.res;
+  if (stT.err) errs.stepsToday = stT.err; else out.stepsToday = stT.res;
+  out.devices = dev.s === 200 ? (dev.j.pairedDevices || []).map(d => flat(d)) : [];
+  out.errs = errs; out.at = Date.now();
+  return out;
 }
 
 export default {
@@ -140,6 +256,7 @@ export default {
     if (!tok) return json({ error: "Not connected or sign-in expired", reconnect: true }, 409);
     if (p === "/api/test") return json(await test(tok, tz));
     if (p === "/api/types") return json(await probe(tok));
+    if (p === "/api/sync") return json(await sync(tok, tz, Math.max(2, Math.min(+u.searchParams.get("days") || 7, 30))));
     if (p === "/api/raw") { // for building Phase 4b: one data type, newest first
       const t = (u.searchParams.get("type") || "").replace(/[^a-z-]/g, ""), n = Math.min(+u.searchParams.get("n") || 3, 25);
       return json((await gget(tok, `/dataTypes/${t}/dataPoints?pageSize=${n}`)).j);

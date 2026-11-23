@@ -47,7 +47,7 @@ function save(){try{const {edit,view,...keep}=S;const j=JSON.stringify(keep);loc
 let PERSIST=false;try{navigator.storage?.persist?.().then(ok=>{PERSIST=!!ok}).catch(()=>{})}catch(e){}
 
 // ---------- backup: export / import ----------
-function exportData(){const {edit,view,...keep}=S;const j=JSON.stringify({app:"workout",key:KEY,ver:1,saved:new Date().toISOString(),data:keep,photos:PHD},null,1);
+function exportData(){const {edit,view,...keep}=S;const j=JSON.stringify({app:"workout",key:KEY,ver:1,saved:new Date().toISOString(),data:keep,photos:PHD,health:HD},null,1);
   const name=`workout-backup-${today()}.json`,file=new File([j],name,{type:"application/json"});
   if(navigator.canShare?.({files:[file]})){navigator.share({files:[file],title:name}).catch(()=>{});return;}
   const a=document.createElement("a");a.href=URL.createObjectURL(file);a.download=name;document.body.appendChild(a);a.click();
@@ -58,6 +58,7 @@ function importData(f){if(!f)return;const r=new FileReader();
     if(!d){toast("That file isn't a Workout backup");return;}
     try{const {edit,view,...keep}=S;localStorage.setItem(KEY+"_preimport",JSON.stringify(keep))}catch(e){}
     S=d;norm();save();applyLook();applyAccent();closeSheets();renderAll();scrollTo({top:0});toast("Backup restored");
+    if(o.health&&typeof o.health==="object"&&o.health.days){const h=o.health;HD.days={...h.days,...HD.days};["sleep","ex","weight"].forEach(k=>{const m=new Map([...(h[k]||[]),...HD[k]].map(x=>[Array.isArray(x)?x[0]:x.start,x]));HD[k]=[...m.values()];});HD.sleep.sort((a,b)=>b.start.localeCompare(a.start));HD.ex.sort((a,b)=>b.start.localeCompare(a.start));HD.weight.sort((a,b)=>b[0].localeCompare(a[0]));HD.at=HD.at||h.at;hdSave();renderAll();}
     if(o.photos&&typeof o.photos==="object")Promise.all(Object.entries(o.photos).filter(([k,v])=>PH[k]&&/^data:image\//.test(v)).map(([k,v])=>phSave(k,v))).then(renderAll).catch(()=>toast("Some photos couldn't be restored"));};
   r.onerror=()=>toast("Couldn't read that file");r.readAsText(f);}
 let resetArm=false;
@@ -298,7 +299,8 @@ function completeWorkout(){
   p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;});
   const cm=cardioPending(k);
   if(cm){S.log=S.log.filter(x=>x.d>=daysAgo(60));S.log.push({d:today(),m:cm});}
-  S.sessions.push({d:today(),k,done,total,cm,w});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
+  const st=S.started&&S.started.k===k&&Date.now()-S.started.t<6*36e5?Math.round((Date.now()-S.started.t)/6e4):null;S.started=null;
+  S.sessions.push({d:today(),k,done,total,cm,w,...(st?{mins:st}:{})});if(S.sessions.length>500)S.sessions=S.sessions.slice(-500);
   S.last=`${dname(d)}, ${fmtD(today())}`;S.count++;clearProgress(k);S.day=(S.view+1)%DAYS.length;S.nextBy[S.prog]=S.day;S.view=null;S.edit=false;stopRest();
   renderAll();scrollTo({top:0});toast(`Workout saved. Next: ${DAYS[S.day].name[0]}`);}
 
@@ -310,7 +312,7 @@ const MET=[
   {k:"sleep",n:"Sleep",u:"h",goal:7.5,c:"--indigo",ic:G.moon,f:v=>r1(v)},
   {k:"hrv",n:"HRV",u:"ms",c:"--cyan",ic:G.wave,f:v=>Math.round(v)},
   {k:"kcal",n:"Calories",u:"kcal",c:"--pink",ic:G.flame,f:v=>Math.round(v).toLocaleString()}];
-const actDay=d=>S.act[d]||{};
+const actDay=d=>({...(S.act[d]||{}),...ghAct(d)}); // Google values win; your manual entries are kept and fill any gaps
 function lastN(k,n){return Array.from({length:n},(_,i)=>{const d=daysAgo(n-1-i);return {d,v:num(actDay(d)[k])};});}
 const avg=a=>{const v=a.filter(x=>x!=null);return v.length?v.reduce((s,x)=>s+x,0)/v.length:null;};
 function openActForm(date=today()){
@@ -319,14 +321,15 @@ function openActForm(date=today()){
     onSave(v){const d=v.date||today();const rec={};MET.forEach(m=>{if(v[m.k]!=null)rec[m.k]=v[m.k];});if(Object.keys(rec).length)S.act[d]=rec;else delete S.act[d];toast("Activity saved");},
     onDate(d){MET.forEach(m=>{$("f_"+m.k).value=actDay(d)[m.k]??"";});}});}
 function renderActivity(){
-  const t=actDay(today()),hasToday=Object.keys(t).length>0,latestD=Object.keys(S.act).sort().pop();
+  const t=actDay(today()),hasToday=Object.keys(t).length>0,latestD=[...Object.keys(S.act),...Object.keys(HD.days)].sort().pop();
   const lab7=Array.from({length:7},(_,i)=>{const d=new Date();d.setDate(d.getDate()-6+i);return "SMTWTFS"[d.getDay()];});
   const steps7=lastN("steps",7),sleep7=lastN("sleep",7),rhr30=lastN("rhr",30).map((p,i)=>({x:i,v:p.v})).filter(p=>p.v!=null);
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   if(!S.daily||S.daily.d!==today())S.daily={d:today(),h:{}};
   $("actBody").innerHTML=`
-  <section class="summary" aria-label="Today's activity">${rings([["Move",num(t.azm)||0,22,"ZONE MIN","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Steps",num(t.steps)||0,10000,"STEPS","--orange"]])}<div class="sumfoot"><span>Fitbit Air</span><span><b>${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</b></span></div></section>
-  <div class="group"><div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--label2)">${G.band}</span><span class="ct"><span class="t1">Fitbit Air</span><span class="t2">${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</span></span><span class="st info">Manual</span></div>
+  <section class="summary" aria-label="Today's activity">${rings([["Move",num(t.azm)||0,22,"ZONE MIN","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Steps",num(t.steps)||0,10000,"STEPS","--orange"]])}<div class="sumfoot"><span>Fitbit Air</span><span>${hdFoot()||`<b>${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</b>`}</span></div></section>
+  ${hdActivity()}
+  <div class="group"><div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--label2)">${G.band}</span><span class="ct"><span class="t1">Fitbit Air</span><span class="t2">${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</span></span><span class="st info">${HD.at?"Google":"Manual"}</span></div>
     <button class="cell action" data-logact>${G.addRow}<span class="lbl">${hasToday?"Edit Today's Numbers":"Log Today's Numbers"}</span></button></div>
   <section class="sec"><div class="sh"><h2>Cardio Log</h2><span class="hacc">${weekCardio()} of 150 min this week</span></div>
     <div class="group">${(()=>{const c=[...S.sessions].reverse().filter(x=>x.cm).slice(0,5);return c.length?c.map(x=>{const d=dayByKey(x.k);return `<div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--ring2)">${G.run}</span><span class="ct"><span class="t1">${x.cm} min cardio</span><span class="t2">After ${d?dname(d):"workout"}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span></div>`}).join(""):emptyCell("No cardio yet","Cardio you finish after a workout shows here.");})()}</div></section>
@@ -381,14 +384,14 @@ const MEALS=[
   ["Evening (optional)",["Cottage cheese or a casein shake","Handful of walnuts and herbal tea","Skim milk with a spoon of peanut butter"],"10–25 g protein"]];
 function renderHealth(){
   const t=actDay(today()),hasToday=Object.keys(t).length>0,sl=num(t.sleep);
-  $("healthTop").innerHTML=`<div class="card"><div class="chh"><b>Sleep</b><span>${sl!=null?`${r1(sl)} h`:"Not logged"}</span></div>
+  $("healthTop").innerHTML=`${hdSleepCard()||`<div class="card"><div class="chh"><b>Sleep</b><span>${sl!=null?`${r1(sl)} h`:"Not logged"}</span></div>
     <div class="stages" aria-hidden="true">${sl!=null?`<i style="flex:${sl};background:var(--indigo)"></i>`:""}</div>
-    <span class="t2">Sleep stages (deep, light, REM, awake) appear here once Apple Health sync is added.</span></div>
-  <section class="sec"><div class="sh"><h2>Today</h2><span class="hacc">${hasToday?"From Fitbit Air":"Tap a tile to log"}</span></div>
-    <div class="tiles">${MET.map(m=>{const v=num(t[m.k]);return `<button class="mt" data-logact style="--c:var(${m.c})"><span class="mk">${m.ic}${m.n}</span><span class="mv ${v==null?"none":""}">${v==null?"—":m.f(v)}${v!=null&&m.u?`<small>${m.u}</small>`:""}</span>${m.goal?`<span class="mg">Goal ${m.f(m.goal)}${m.u?" "+m.u:""}</span><span class="mbar"><i style="width:${v==null?0:Math.min(100,v/m.goal*100)}%"></i></span>`:`<span class="mg">${m.k==="rhr"?"Lower is fitter":"Higher means better recovery"}</span>`}</button>`}).join("")}</div></section>
-`;
-  $("hseg").innerHTML=[["checkups","Checkups"],["diet","Diet"]].map(([k,n])=>`<button class="${S.hseg===k?"on":""}" data-hseg="${k}" role="tab" aria-selected="${S.hseg===k}">${n}</button>`).join("");
-  S.hseg==="diet"?renderDiet():renderCheckups();}
+    <span class="t2">${GH.url?"Sleep stages (deep, light, REM, awake) appear after your next Google Health sync.":"Connect Google Health in Settings to see sleep stages (deep, light, REM, awake)."}</span></div>`}
+  <section class="sec"><div class="sh"><h2>Today</h2><span class="hacc">${hdFoot()||(hasToday?"From Fitbit Air":"Tap a tile to log")}</span></div>
+    <div class="tiles">${MET.map(m=>{const v=num(t[m.k]);return `<button class="mt" data-logact style="--c:var(${m.c})"><span class="mk">${m.ic}${m.n}</span><span class="mv ${v==null?"none":""}">${v==null?"—":m.f(v)}${v!=null&&m.u?`<small>${m.u}</small>`:""}</span>${m.goal?`<span class="mg">Goal ${m.f(m.goal)}${m.u?" "+m.u:""}</span><span class="mbar"><i style="width:${v==null?0:Math.min(100,v/m.goal*100)}%"></i></span>`:`<span class="mg">${m.k==="rhr"?"Lower is fitter":m.k==="kcal"?"Burned today":"Higher means better recovery"}</span>`}</button>`}).join("")}${HD.at?hdTiles():""}</div></section>
+  ${hdHeart()}`;
+  $("hseg").innerHTML=[["vitals","Vitals"],["checkups","Checkups"],["diet","Diet"]].map(([k,n])=>`<button class="${S.hseg===k?"on":""}" data-hseg="${k}" role="tab" aria-selected="${S.hseg===k}">${n}</button>`).join("");
+  S.hseg==="diet"?renderDiet():S.hseg==="vitals"?hdVitals():renderCheckups();}
 function renderCheckups(){
   const cs=sortD(S.checkups),last=cs[cs.length-1];
   const rowM=(m,v,prev)=>{const s=m.s(v),ch=prev!=null?r1(v-prev):null;return `<div class="cell"><span class="ct"><span class="t1">${m.n}</span><span class="t2">${m.t}${ch?` · ${ch>0?"+":""}${ch} since last`:""}</span></span><span class="rv"><span class="val">${v}<small>${m.u}</small></span><span class="st ${s}">${STL[s]}</span></span></div>`;};
@@ -448,6 +451,7 @@ function insights(){const out=[];const add=(ic,c,t,d,s)=>out.push({ic,c,t,d,s});
   const firsts={},lasts={};S.sessions.forEach(x=>Object.entries(x.w||{}).forEach(([n,v])=>{if(firsts[n]==null)firsts[n]=v;lasts[n]=v;}));
   const gains=Object.keys(lasts).map(n=>({n,g:r1(lasts[n]-firsts[n])})).filter(x=>x.g>0).sort((a,b)=>b.g-a.g).slice(0,3);
   add(G.trend,"--green","Strength",gains.length?gains.map(x=>`${x.n} +${x.g} kg`).join(" · "):"Enter the kg you lift in each workout to track strength gains.",gains.length?"ok":"info");
+  hdInsights(add);
   return out;}
 function buildReport(question){const L=[],td=today(),p=S.profile;
   L.push("Please analyse my fitness and health data below and give me clear, specific advice.","");
@@ -456,8 +460,9 @@ function buildReport(question){const L=[],td=today(),p=S.profile;
   DAYS.forEach((d,i)=>L.push(`- Day ${i+1} ${dname(d)}: ${planFor(d).map(n=>{const e=d.lib.find(x=>x[0]===n);return `${n} (${e?e[3]:""})`;}).join(", ")}`));
   L.push("","## Workouts completed (last 45 days)");const ss=S.sessions.filter(x=>x.d>=daysAgo(45));
   L.push(ss.length?ss.map(x=>`- ${x.d} ${dname(dayByKey(x.k)||{name:[x.k,""]})}: ${x.done}/${x.total} sets, ${x.cm} min cardio${Object.keys(x.w||{}).length?`; weights: ${Object.entries(x.w).map(([n,v])=>`${n} ${v} kg`).join(", ")}`:""}`).join("\n"):"- None logged yet");
-  L.push("","## Fitbit Air activity (last 21 days)");const ad=Object.keys(S.act).filter(d=>d>=daysAgo(21)).sort();
-  L.push(ad.length?["| Date | Steps | Zone min | Resting HR | Sleep h | HRV ms | Calories |","|---|---|---|---|---|---|---|",...ad.map(d=>{const a=S.act[d];return `| ${d} | ${a.steps??""} | ${a.azm??""} | ${a.rhr??""} | ${a.sleep??""} | ${a.hrv??""} | ${a.kcal??""} |`;})].join("\n"):"- None logged yet");
+  L.push("","## Fitbit Air activity (last 21 days)");const ad=[...new Set([...Object.keys(S.act),...Object.keys(HD.days)])].filter(d=>d>=daysAgo(21)&&d<=today()).sort();
+  L.push(ad.length?["| Date | Steps | Zone min | Resting HR | Sleep h | HRV ms | Calories |","|---|---|---|---|---|---|---|",...ad.map(d=>{const a=actDay(d);return `| ${d} | ${a.steps??""} | ${a.azm??""} | ${a.rhr??""} | ${a.sleep??""} | ${a.hrv??""} | ${a.kcal??""} |`;})].join("\n"):"- None logged yet");
+  L.push(...hdReport());
   L.push("","## Body measurements");L.push(S.body.length?sortD(S.body).slice(-15).map(x=>`- ${x.d}: ${[x.kg!=null?x.kg+" kg":"",x.waist!=null?"waist "+x.waist+" cm":"",x.bf!=null?"body fat "+x.bf+"%":""].filter(Boolean).join(", ")}`).join("\n"):"- None logged yet");
   L.push("","## Health checkups (cholesterol in mmol/L)");L.push(S.checkups.length?sortD(S.checkups).map(x=>`- ${x.d}: ${[x.tc!=null?`total ${x.tc}`:"",x.ldl!=null?`LDL ${x.ldl}`:"",x.hdl!=null?`HDL ${x.hdl}`:"",x.tg!=null?`triglycerides ${x.tg}`:"",x.glu!=null?`fasting glucose ${x.glu}`:"",x.a1c!=null?`HbA1c ${x.a1c}%`:"",x.sys!=null?`BP ${x.sys}/${x.dia??"?"}`:""].filter(Boolean).join(", ")}${x.note?` (note: ${x.note})`:""}`).join("\n"):"- None logged yet");
   const T=targets();L.push("","## Diet");if(T)L.push(`- Daily targets in the app: ${T.kcal} kcal, ${T.protein} g protein, 30 g fibre, ${T.water} L water`);
@@ -519,7 +524,7 @@ function renderSettings(){
     <div class="lh">Rest Timer</div>
     <div class="group">${segRow("Must-do lifts","main",[60,90,120])}${segRow("Other exercises","other",[45,60,90])}</div>
     <p class="lf">The timer starts by itself when you tick a set. Shorter rest keeps your heart rate up for fat loss.</p>
-    ${ghUI()}
+    ${ghUI()}${hdSettings()}
     <div class="lh">Data</div>
     <div class="group"><button class="cell" id="exportData"><span class="ct"><span class="t1">Export Backup</span><span class="t2">Save all your data as a file</span></span></button>
       <label class="cell"><span class="ct"><span class="t1">Import Backup</span><span class="t2">Restore from a backup file</span></span><input type="file" id="importFile" accept=".json,application/json" hidden></label></div>

@@ -486,3 +486,34 @@ nav button.on{color:var(--c)}
 .phact{gap:8px;flex-wrap:wrap;padding-top:4px;padding-bottom:12px}
 .phb{flex:1 0 auto;height:34px;padding:0 12px;border-radius:9px;background:var(--fill2);color:var(--tint);font-size:14px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 :root[data-scr="health"] .hero{background-position:0 0,68% 8%}
+/* Phase 4b – Google Health */
+.hsync{display:inline-flex;align-items:center;gap:5px;color:var(--tint);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;background:none;padding:0}
+.hsync svg{width:15px;height:15px}.hsync .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.slrow{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.slv{font:600 34px/1.1 var(--round);font-variant-numeric:tabular-nums;display:flex;flex-direction:column;gap:4px}
+.slv small{font-size:18px;color:var(--label2);margin:0 2px 0 1px}.slv .t2{font:400 15px var(--sys);color:var(--label2)}
+.slsc{width:64px;height:64px;border-radius:50%;display:grid;place-content:center;text-align:center;flex:none;
+  background:radial-gradient(closest-side,var(--cell) 80%,transparent 81%),conic-gradient(var(--indigo) calc(var(--p)*1%),var(--fill2) 0)}
+.slsc b{font:600 22px/1 var(--round);font-variant-numeric:tabular-nums}.slsc span{font-size:11px;color:var(--label2)}
+.slleg{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.slleg span{display:flex;flex-direction:column;font-size:12px;color:var(--label2);position:relative;padding-left:12px}
+.slleg i{position:absolute;left:0;top:4px;width:7px;height:7px;border-radius:50%;background:var(--c)}
+.slleg b{font:600 15px var(--round);color:var(--label);font-variant-numeric:tabular-nums}.slleg em{font-style:normal;font-size:12px}
+.hyp{margin-top:2px;max-height:96px}
+.chart>.cv{max-height:230px}
+.charts{display:flex;flex-direction:column;gap:10px}
+.zbars{display:flex;flex-direction:column;gap:8px;padding:4px 0 6px}
+.zb{display:grid;grid-template-columns:88px 1fr 58px;align-items:center;gap:10px;font-size:14px}
+.zb i{height:8px;border-radius:4px;background:var(--fill3);overflow:hidden}.zb i b{display:block;height:100%;border-radius:4px;background:var(--c)}
+.zb em{font-style:normal;text-align:right;color:var(--label2);font-variant-numeric:tabular-nums}
+.sbars{display:grid;grid-template-columns:repeat(14,1fr);gap:4px;height:130px;align-items:end;padding-top:6px}
+.sbars>div{display:flex;flex-direction:column;align-items:center;gap:4px;height:100%}
+.sb{flex:1;width:70%;display:flex;flex-direction:column;justify-content:flex-end;gap:1px;border-radius:4px;overflow:hidden}
+.sb i{display:block;width:100%}.sbars em{font-style:normal;font-size:11px;color:var(--label2)}
+.ghpop{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:24px;opacity:0;transition:opacity .2s;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.ghpop.open{opacity:1}
+.gpc{width:min(360px,100%);background:var(--cell);border-radius:22px;padding:22px 18px 16px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;box-shadow:inset 0 0 0 .5px var(--cardline)}
+.gpc .itile{width:44px;height:44px;border-radius:12px}.gpc .itile svg{width:24px;height:24px}
+.gpc b{font-size:19px;font-weight:600}.gpc p{margin:0 0 6px;color:var(--label2);font-size:15px;line-height:1.35}
+.gpc .btn2,.gpc .big{width:100%}
+@media (min-width:744px){.charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}}
