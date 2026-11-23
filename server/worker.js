@@ -163,7 +163,7 @@ async function sync(tok, tz, days) {
   const to = addD(day(new Date().toISOString(), tz), 1), from = addD(to, -days), errs = {}, out = { from, to: addD(to, -1), days: {} };
   const put = (d, k, v) => { if (d && v != null) (out.days[d] ||= {})[k] = v; };
   const ROLL = ["steps", "distance", "total-calories", "active-energy-burned", "active-zone-minutes", "active-minutes", "heart-rate",
-    "sedentary-period", "activity-level", "time-in-heart-rate-zone", "swim-lengths-data"];
+    "sedentary-period", "time-in-heart-rate-zone", "swim-lengths-data"];
   const DAILY = { "daily-resting-heart-rate": v => ({ rhr: N(v.beatsPerMinute) }),
     "daily-heart-rate-variability": v => ({ hrv: N(v.averageHeartRateVariabilityMilliseconds), hrvDeep: N(v.deepSleepRootMeanSquareOfSuccessiveDifferencesMilliseconds), nremHr: N(v.nonRemHeartRateBeatsPerMinute) }),
     "daily-oxygen-saturation": v => ({ spo2: N(v.averagePercentage), spo2Lo: N(v.lowerBoundPercentage), spo2Hi: N(v.upperBoundPercentage) }),
@@ -173,7 +173,8 @@ async function sync(tok, tz, days) {
   const mid = midnight(tz);
   const [roll, dl, sl, ex, wt, ht, hrT, stT, dev] = await Promise.all([
     Promise.all(ROLL.map(t => daily(tok, t, from, to))),
-    Promise.all(Object.keys(DAILY).map(t => listAll(tok, t, `${camel(t)}.date >= "${from}"`, 1000, 1))),
+    // Google rejects a date filter on these daily types, so take the newest days instead (newest first).
+    Promise.all(Object.keys(DAILY).map(t => listAll(tok, t, "", days + 3, 1))),
     listAll(tok, "sleep", `sleep.interval.civil_end_time >= "${from}"`, 25, 3),
     listAll(tok, "exercise", `exercise.interval.civil_start_time >= "${from}"`, 25, 3),
     listAll(tok, "weight", "", 60, 1),
