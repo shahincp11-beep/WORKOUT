@@ -15,8 +15,8 @@ function gyRep(k,n,e,j){const cur=S.reps?.[k+"|"+n]||[];if(cur[j-1])return cur[j
 function gymReady(){const td=today(),D0=HD?.days||{},avg=k=>{const v=[];for(let i=1;i<=30;i++){const x=D0[daysAgo(i)]?.[k];if(x!=null)v.push(+x);}return v.length>=3?v.reduce((a,b)=>a+b,0)/v.length:null;};
   const parts=[],why=[];const sl=hdMain(td)||hdMain(daysAgo(1)),ss=typeof hdScore==="function"?hdScore(sl):null;
   if(ss!=null){parts.push([ss/100,40]);why.push(`Sleep ${hdHMt(sl.asleep)}`);}
-  const hv=D0[td]?.hrv,ha=avg("hrv");if(hv!=null&&ha){parts.push([Math.max(0,Math.min(1,(hv/ha-.85)/.2)),30]);why.push(`HRV ${Math.round(hv)} (avg ${Math.round(ha)})`);}
-  const rh=D0[td]?.rhr,ra=avg("rhr");if(rh!=null&&ra){parts.push([Math.max(0,Math.min(1,(ra+5-rh)/7)),20]);why.push(`Resting HR ${Math.round(rh)} (avg ${Math.round(ra)})`);}
+  const hv=D0[td]?.hrv??D0[daysAgo(1)]?.hrv,ha=avg("hrv");if(hv!=null&&ha){parts.push([Math.max(0,Math.min(1,(hv/ha-.85)/.2)),30]);why.push(`HRV ${Math.round(hv)} (avg ${Math.round(ha)})`);}
+  const rh=D0[td]?.rhr??D0[daysAgo(1)]?.rhr,ra=avg("rhr");if(rh!=null&&ra){parts.push([Math.max(0,Math.min(1,(ra+5-rh)/7)),20]);why.push(`Resting HR ${Math.round(rh)} (avg ${Math.round(ra)})`);}
   if(!parts.length)return null;const n2=S.sessions.filter(x=>x.d>=daysAgo(2)&&x.d<td).length;parts.push([[1,.6,.2][Math.min(n2,2)],10]);why.push(n2?`${n2} workout${n2>1?"s":""} in the last 2 days`:"Rested yesterday");
   const sc=Math.round(parts.reduce((a,[v,w])=>a+v*w,0)/parts.reduce((a,[,w])=>a+w,0)*100);
   const lv=sc>=75?["Heavy","--green","Go for your top weights. Add a set on your main lift if it feels good."]:sc>=50?["Medium","--orange","Normal weights. Stop each set 1–2 reps before failure."]:["Light","--red","Drop weights by about 20% and skip optional exercises. Keep the walk easy."];
