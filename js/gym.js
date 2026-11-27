@@ -1,5 +1,5 @@
-// Phase 4c – Gym Mode: arrival check (gym location), 4-box picker, full-screen one-exercise-at-a-time mode
-// Data: S.gym={lat,lon,r,ask,lastAsk} · S.reps["key|exercise"]=[reps per set] · duration from S.started (saved as session.mins)
+// Gym: arrival check (gym location), readiness, 4-box picker, and (Phase 4d-1) the gym workout list: tap-to-time exercises, background total timer, reps/kg per set, leave-gym auto close, mode button
+// Data: S.gym={lat,lon,r,ask,lastAsk} · S.started={k,t,p?} · S.gyT["key|ex"]={a:ms,on:ts} · S.reps["key|ex"]=[reps per set] · S.rpc["key|ex"]=reps picked · S.nsx["key|ex"]=set count · S.gyLast=last tap · S.mode
 const GX='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 const GUP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>';
 const GPIN='<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a7 7 0 0 0-7 7c0 5.2 7 13 7 13s7-7.8 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
@@ -37,96 +37,6 @@ function gymPick(){
   document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"));
 }
 
-// ---------- full-screen gym mode ----------
-function gymOpen(i){
-  S.tab="workout";S.view=i;S.edit=false;S.reps=S.reps||{};const k=DAYS[i].key;
-  if(!(S.started&&S.started.k===k&&gyEl()<6*36e5))S.started={k,t:Date.now()};
-  if(S.started.p){S.started.t+=Date.now()-S.started.p;delete S.started.p;toast("Timer resumed");}
-  save();renderAll();GY={i};let el=$("gym");if(!el){el=document.createElement("div");el.id="gym";el.setAttribute("role","dialog");el.setAttribute("aria-modal","true");document.body.appendChild(el);}
-  gymRender();gymGoCur();document.body.classList.add("gymon");const v=gyVid();v.play().catch(()=>{});requestAnimationFrame(()=>el.classList.add("open"));$("gymini")?.remove();
-  clearInterval(GY.tm);GY.tm=setInterval(gymTick,1000);gymTick();gymWake(true);
-}
-function gymGoCur(){const p=plan(),k=D().key;const i=p.findIndex(n=>{const e=find(n);return e&&(S.sets[k+"|"+n]||0)<nSets(e);});const any=p.some(n=>S.sets[k+"|"+n]);if(!any&&!S.checks[k+"w0"])return;
-  const ps=$("gym").querySelector(".gyps");ps.scrollTop=ps.clientHeight*(i<0?p.length+1:i+1);}
-function gymLeave(){const el=document.createElement("div");el.className="ghpop";el.id="ghpop";el.style.zIndex=60;
-  el.innerHTML=`<div class="gpc" role="dialog" aria-modal="true" aria-label="Leave Gym Mode"><b>Leave Gym Mode?</b><p>Your sets so far are kept either way.</p>
-    <button class="big" data-gyl="pause">Pause Timer</button><button class="btn2" style="width:100%" data-gyl="run">Keep Timer Running</button>
-    <button class="btn2" style="width:100%;color:var(--red)" data-gyl="stop">Stop Timer – Don't Save Time</button><button class="btn2" style="width:100%" id="hdLater">Back to Workout</button></div>`;
-  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"));}
-function gymClose(){clearInterval(GY?.tm);GY=null;setTimeout(gymMini,0);$("gym")?.classList.remove("open");document.body.classList.remove("gymon");gymWake(false);renderAll();}
-const gyX0=()=>S.gyLast&&S.started&&S.gyLast>S.started.t?S.gyLast:S.started?.t||Date.now();
-function gymTick(){const t=$("gyT");if(t&&S.started)t.textContent=gyClock(gyEl());
-  document.querySelectorAll(".gyxt").forEach(b=>{const g=S.gyT?.[b.dataset.gyxk],e=find(b.dataset.gyxk.split("|")[1]),fin=e&&(S.sets[b.dataset.gyxk]||0)>=nSets(e);b.textContent=gyClock(fin&&g?.e?g.e-g.s:Date.now()-(g?.s||gyX0()));});}
-let GWL=null;async function gymWake(on){try{if(on){GWL=await navigator.wakeLock?.request("screen");}else{GWL?.release();GWL=null;}}catch(e){}}
-
-function gymPage(n,idx,cnt){
-  const d=D(),k=d.key,e=find(n);if(!e)return"";const sk=k+"|"+n,ns=nSets(e),dn=Math.min(S.sets[sk]||0,ns),reps=S.reps[sk]||[],all=dn>=ns;
-  const im=ph(GRPPH[e[1]]||DAYPH[k],true),rep=gyRep(k,n,e,dn),wt=S.wts[sk]||"";
-  return `<section class="gyp" data-gyn="${esc(n)}" style="${im?`--img:url(${im})`:""}"><div class="gyin">
-    <div class="gyno">${idx} of ${cnt} · ${esc(e[1])}${isStrong(k,n)?" · Strength":""}</div>
-    <div class="gyttl"><h2>${esc(n)}</h2>${play(n)}</div>
-    <div class="gytg">${tierTag(tierOf(k,n))}${esc(e[3])} · ${esc(e[2])}</div>
-    <div class="gysets">${Array.from({length:ns},(_,j)=>`<button class="gys ${j<dn?"on":""} ${j===dn?"cur":""}" data-gyset="${j}"><b>${j<dn?(reps[j]||"✓"):j+1}</b><span>${j<dn?"reps":"set"}</span></button>`).join("")}</div>
-    ${all?`<div class="gydone">${G.check}<b>All ${ns} sets done</b><span>Swipe up for the next exercise</span></div>`:`
-    <div class="gylab">Reps · set ${dn+1}</div>
-    <div class="gyw" data-gyrep="${rep}">${Array.from({length:40},(_,r)=>`<button class="${r+1===rep?"on":""}" data-gyr="${r+1}">${r+1}</button>`).join("")}</div>
-    <div class="gykg"><button data-gykg="-2.5">−</button><label><input inputmode="decimal" placeholder="0" value="${esc(wt)}" data-gywt="${esc(n)}"><span>kg</span></label><button data-gykg="2.5">+</button></div>
-    <button class="big gylog" data-gylog="1">Log Set ${dn+1} · ${rep} reps</button>`}
-    <div class="gyex"><span>${all?"Exercise time":"This exercise"}</span><b class="gyxt" data-gyxk="${esc(sk)}">0:00</b></div>
-    <div class="gyhint">${GUP}<span>Swipe up · next</span></div></div></section>`;
-}
-function gymRender(keepScroll){
-  const el=$("gym"),d=D(),k=d.key,p=plan(),st=dayStats(d),pg=el.querySelector(".gyps"),top=pg?pg.scrollTop:0;
-  const chk=(id,list)=>list.map((w,i)=>{const ck=k+id+i;return `<label class="cell chk"><input type="checkbox" class="circ" data-ck="${ck}" ${S.checks[ck]?"checked":""}><span class="ct"><span class="t1">${esc(w[0])}</span><span class="t2">${esc(w[1])}</span></span><span class="acc">${esc(w[2])}</span></label>`}).join("");
-  el.innerHTML=`<header class="gyh"><button class="gyx" id="gyX" aria-label="Leave Gym Mode">${GX}</button><div class="gyc"><span>${esc(dname(d))}</span><b id="gyT">0:00</b></div><div class="gyhr"><button class="gyx" id="gyPip" aria-label="Float timer over other apps">${GPIP}</button><button class="gyfin" id="gyFin">Finish</button></div></header>
-    <div class="gybar">${p.map(n=>{const e=find(n);const ns=e?nSets(e):1,dn=Math.min(S.sets[k+"|"+n]||0,ns);return `<i style="--p:${dn/ns}"></i>`}).join("")}</div>
-    <div class="gyps">
-      <section class="gyp gywu"><div class="gyin"><div class="gyno">Warm-up · ${st.warm} min</div><h2>Get ready</h2><div class="group">${chk("w",WARM[k])}</div><div class="gyhint">${GUP}<span>Swipe up · first exercise</span></div></div></section>
-      ${p.map((n,i)=>gymPage(n,i+1,p.length)).join("")}
-      <section class="gyp gyend"><div class="gyin"><div class="gyno">Cardio & finish</div><h2>Finish strong</h2><div class="group">${chk("f",FIN[k])}</div>
-        <div class="gysum"><div><b id="gyT2">—</b><span>time</span></div><div><b>${st.done}/${st.total}</b><span>sets</span></div><div><b>${cardioPending(k)}</b><span>cardio min</span></div></div>
-        <button class="big" id="gyFin2">Finish & Save Workout</button><p class="gyft">The time on screen is saved as your workout duration.</p></div></section>
-    </div>`;
-  const ps=el.querySelector(".gyps");if(keepScroll)ps.scrollTop=top;
-  ps.addEventListener("scroll",()=>{if(ps.scrollTop>ps.clientHeight*.6&&S.started&&!(S.gyLast>S.started.t)){S.gyLast=Date.now();save();}const t2=$("gyT2");if(t2&&S.started)t2.textContent=gyClock(gyEl());},{passive:true});
-  const t2=$("gyT2");if(t2&&S.started)t2.textContent=gyClock(gyEl());
-  el.querySelectorAll(".gyw").forEach(w=>{const on=w.querySelector(".on");if(on)w.scrollLeft=on.offsetLeft-(w.clientWidth-on.offsetWidth)/2;let to;
-    w.addEventListener("scroll",()=>{clearTimeout(to);to=setTimeout(()=>gymWheel(w),90);},{passive:true});});
-  gymTick();
-}
-function gymWheel(w){const c=w.scrollLeft+w.clientWidth/2;let best=null,bd=1e9;w.querySelectorAll("button").forEach(b=>{const m=b.offsetLeft+b.offsetWidth/2,dd=Math.abs(m-c);if(dd<bd){bd=dd;best=b;}});
-  if(!best)return;w.querySelectorAll("button").forEach(b=>b.classList.toggle("on",b===best));w.dataset.gyrep=best.dataset.gyr;
-  const lg=w.closest(".gyp").querySelector(".gylog");if(lg)lg.textContent=lg.textContent.replace(/· \d+ reps/,`· ${best.dataset.gyr} reps`);}
-function gymLog(sec){const n=sec.dataset.gyn,k=D().key,sk=k+"|"+n,e=find(n),ns=nSets(e),dn=Math.min(S.sets[sk]||0,ns);if(dn>=ns)return;
-  const rep=+sec.querySelector(".gyw").dataset.gyrep||gyMin(e);const now=Date.now();S.gyT=S.gyT||{};(S.gyT[sk]=S.gyT[sk]||{s:gyX0()}).e=now;S.gyLast=now;(S.reps[sk]=S.reps[sk]||[])[dn]=rep;S.reps[sk].length=dn+1;S.sets[sk]=dn+1;save();
-  const nx=nextInSuper(k,n,plan());if(nx)toast(`Now ${nx}, then rest`);else startRest(isStrong(k,n)?Math.max(150,S.rest.main):isEss(k,n)?S.rest.main:S.rest.other);
-  gymRender(true);}
-function gymFinish(){const mins=S.started?Math.round(gyEl()/6e4):0;clearInterval(GY?.tm);GY=null;$("gym")?.classList.remove("open");document.body.classList.remove("gymon");gymWake(false);
-  S.gyFloat=false;completeWorkout();S.gyRd=null;const v=$("gyv");if(v){if(gyInPip())(document.exitPictureInPicture?.()||v.webkitSetPresentationMode?.("inline"));v.pause();}gymMini();toast(`Workout saved · ${mins} min`);}
-
-document.addEventListener("click",ev=>{
-  const b=ev.target.closest("button");if(!b)return;const ds=b.dataset;
-  if(ds.gyl){$("ghpop")?.remove();const v=$("gyv");
-    if(ds.gyl==="pause"){S.started.p=Date.now();S.gyFloat=false;save();v?.pause();gymClose();toast("Timer paused · tap the box to carry on");}
-    else if(ds.gyl==="stop"){S.started=null;S.gyFloat=false;save();v?.pause();gymClose();toast("Timer stopped · your sets are kept");}
-    else{gymClose();toast("Timer still running");}
-    return;}
-  if(ds.gyhello){$("ghpop")?.remove();gymPick();return;}
-  if(ds.gygo!=null){$("ghpop")?.remove();const r=gymReady();S.gyRd=r?{sc:r.sc,lv:r.lv}:null;gymOpen(+ds.gygo);return;}
-  if(b.id==="gymStart"){gymPick();return;}
-  if(b.id==="gymHere"){gymOpen(S.view??S.day);return;}
-  if(!GY||!b.closest("#gym"))return;
-  if(b.id==="gyX"){gymLeave();return;}
-  if(b.id==="gyFin"){const ps=$("gym").querySelector(".gyps");ps.scrollTo({top:ps.scrollHeight,behavior:"smooth"});return;}
-  if(b.id==="gyFin2"){gymFinish();return;}
-  if(ds.gyr){const w=b.parentElement;w.scrollTo({left:b.offsetLeft-(w.clientWidth-b.offsetWidth)/2,behavior:"smooth"});return;}
-  if(ds.gylog){gymLog(b.closest(".gyp"));return;}
-  if(ds.gykg){const i=b.parentElement.querySelector("input"),v=Math.max(0,r1((num(i.value)||0)+ +ds.gykg));i.value=v||"";S.wts[D().key+"|"+i.dataset.gywt]=i.value;save();return;}
-  if(ds.gyset!=null){const sec=b.closest(".gyp"),n=sec.dataset.gyn,sk=D().key+"|"+n,j=+ds.gyset,dn=S.sets[sk]||0;if(j<dn){S.sets[sk]=j;if(S.reps[sk])S.reps[sk].length=j;save();gymRender(true);toast(`Set ${j+1} undone`);}return;}
-},true);
-document.addEventListener("input",ev=>{const i=ev.target;if(i.dataset?.gywt!=null){S.wts[D().key+"|"+i.dataset.gywt]=i.value;save();}});
-document.addEventListener("change",ev=>{if(GY&&ev.target.dataset?.ck!=null)setTimeout(()=>gymRender(true),0);});
-
 // ---------- gym location (set once) + arrival check ----------
 const gyDist=(a,b,c,d)=>{const R=6371e3,t=Math.PI/180,x=(c-a)*t,y=(d-b)*t,h=Math.sin(x/2)**2+Math.cos(a*t)*Math.cos(c*t)*Math.sin(y/2)**2;return 2*R*Math.asin(Math.sqrt(h));};
 const gyPos=()=>new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>ok(p.coords),no,{enableHighAccuracy:true,timeout:12000,maximumAge:120000}):no(new Error("no gps")));
@@ -140,7 +50,7 @@ function gymSetUI(){const g=S.gym;const m=g&&g.lat!=null;
     <div class="cell gylink"><input id="gyLink" type="url" inputmode="url" placeholder="Paste a Google Maps link" autocomplete="off"><button class="gylb" id="gyLinkGo">Use Link</button></div>
     <button class="cell action" id="gyHereSet">${GPIN}<span class="lbl">${m?"Move to Where I Am Now":"Set to Where I Am Now"}</span></button>
     ${m?`<button class="cell action" id="gyDel" style="color:var(--red)"><span class="lbl">Remove Gym Location</span></button>`:""}</div>
-    <p class="lf">Easiest: in Google Maps, open your gym → Share → Copy, then paste the link here. Or tap “Set” while you're at the gym. For a reminder even when the app is closed: Shortcuts → Automation → + → Arrive → pick your gym on the map → Show Notification “Gym time – open Workout”.</p>`;}
+    <p class="lf">Easiest: in Google Maps, open your gym → Share → Copy, then paste the link here. Or tap “Set” while you're at the gym. For a reminder even when the app is closed: Shortcuts → Automation → + → Arrive → pick your gym on the map → Show Notification “Gym time – open Workout”. To be reminded to finish: a second automation with Leave → Show Notification “Finish your workout”. If you forget, opening the app away from the gym ends the workout at your last tap.</p>`;}
 function gyCoords(t){try{t=decodeURIComponent(t||"");}catch(e){}const m=t.match(/!3d(-?\d+\.\d+)!4d(-?\d+\.\d+)/)||t.match(/[?&](?:q|ll|query|center|destination)=(-?\d+\.\d+),\s*(-?\d+\.\d+)/)||t.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/)||t.match(/^\s*[(\[]?\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*[)\]]?\s*$/);return m?{lat:+m[1],lon:+m[2]}:null;}
 async function gymLink(){const t=($("gyLink")?.value||"").trim();if(!t)return toast("Paste a Google Maps link first");
   let c=!/goo\.gl|g\.co\//.test(t)&&gyCoords(t),name=(t.match(/\/place\/([^/]+)/)||[])[1];
@@ -159,44 +69,94 @@ document.addEventListener("change",ev=>{if(ev.target.id==="gyAsk"){S.gym.ask=ev.
 async function gymArrive(){const g=S.gym;if(!g||g.lat==null||g.ask===false||GY||$("ghpop")||document.hidden)return;
   if(Date.now()-(g.lastAsk||0)<3*36e5||S.sessions.some(x=>x.d===today()))return;
   try{const c=await gyPos();if(gyDist(g.lat,g.lon,c.latitude,c.longitude)<=(g.r||150)+Math.min(c.accuracy||0,100)){g.lastAsk=Date.now();save();gymHello();}}catch(e){}}
-addEventListener("load",()=>{setTimeout(gymArrive,1500);gymMini();});
-document.addEventListener("visibilitychange",()=>{if(!document.hidden)setTimeout(gymArrive,800);});
 
-// ---------- floating timer: over other apps (iOS Picture in Picture) + mini box inside the app ----------
-// gymclock.mp4 = a silent 2-hour clock video; it is started at the elapsed time so iOS keeps it running natively in PiP.
-const GPIP='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="4.5" width="19" height="15" rx="2.5"/><rect x="12" y="11" width="7" height="6" rx="1.2" fill="currentColor"/></svg>';
-const GARR=d=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="${d==="l"?"M15 5l-7 7 7 7":"M9 5l7 7-7 7"}"/></svg>`;
-const gyLive=()=>S.started&&gyEl()<6*36e5&&DAYS.some(d=>d.key===S.started.k);
-function gyVid(){let v=$("gyv");if(!v){v=document.createElement("video");v.id="gyv";v.src="img/gymclock.mp4";v.muted=true;v.playsInline=true;v.setAttribute("playsinline","");v.setAttribute("autopictureinpicture","");v.preload="auto";
-  v.addEventListener("enterpictureinpicture",()=>{S.gyFloat=true;save();});v.addEventListener("leavepictureinpicture",()=>{if(!GY)v.pause();});v.addEventListener("webkitpresentationmodechanged",()=>{if(v.webkitPresentationMode==="picture-in-picture"){S.gyFloat=true;save();}else if(!GY)v.pause();});document.body.appendChild(v);}return v;}
-const gySync=v=>{if(S.started)try{v.currentTime=Math.min(7199,gyEl()/1000);}catch(e){}};
-function gymFloat(){if(!gyLive())return toast("Start a workout first");S.gyFloat=true;save();const v=gyVid();gySync(v);
-  if(!v.paused&&gyInPip())return toast("Timer is already floating");
-  let asked=false;
-  try{if(v.webkitSupportsPresentationMode&&v.webkitSupportsPresentationMode("picture-in-picture")){v.webkitSetPresentationMode("picture-in-picture");asked=true;}
-    else if(document.pictureInPictureEnabled&&!v.disablePictureInPicture){v.requestPictureInPicture().catch(e=>toast("Floating timer blocked: "+(e.message||e.name)));asked=true;}}catch(e){toast("Floating timer blocked: "+(e.message||e.name));return;}
-  v.play().catch(()=>{});
-  if(!asked)return toast("This iPhone doesn't allow a floating timer from a Home Screen app");
-  toast("Opening floating timer…");setTimeout(()=>{if(gyInPip())toast("Timer is floating · swipe it to the edge to hide");else toast("iPhone didn't open the floating timer here");},1500);}
-const gyInPip=()=>{const v=$("gyv");return !!v&&(document.pictureInPictureElement===v||v.webkitPresentationMode==="picture-in-picture");};
-document.addEventListener("visibilitychange",()=>{const v=$("gyv");if(!v)return;if(!gyLive()){if(gyInPip())(document.exitPictureInPicture?.()||v.webkitSetPresentationMode?.("inline"));v.pause();return;}gySync(v);if(S.gyFloat&&!GY&&!S.started.p){const i=DAYS.findIndex(d=>d.key===S.started.k);if(i>=0)gymOpen(i);}});
+// ---------- Phase 4d-1 · gym workout list ----------
+// Times are kept as timestamps, so they keep counting while the app is in the background (YouTube, Music…).
+const gyLive=()=>!!S.started&&gyEl()<6*36e5&&DAYS.some(d=>d.key===S.started.k);
+const gxMs=g=>!g?0:g.a!=null?g.a+(g.on?Date.now()-g.on:0):g.e&&g.s?g.e-g.s:0; // old 4c entries {s,e} still count
+const gyDayI=()=>DAYS.findIndex(d=>d.key===S.started?.k);
+function gyStart(k,quiet){if(S.started&&S.started.k===k&&gyEl()<6*36e5){if(S.started.p){S.started.t+=Date.now()-S.started.p;delete S.started.p;if(!quiet)toast("Timer resumed");}return;}
+  S.started={k,t:Date.now()};S.gyLast=Date.now();if(!quiet)toast("Workout timer started");}
+function gyStopAll(at){const t=at||Date.now();for(const sk in S.gyT||{}){const g=S.gyT[sk];if(g&&g.on){g.a=(g.a||0)+Math.max(0,t-g.on);g.on=null;}}}
+function gyTap(n){const k=D().key,sk=k+"|"+n;S.gyT=S.gyT||{};const g=S.gyT[sk]=S.gyT[sk]&&S.gyT[sk].a!=null?S.gyT[sk]:{a:gxMs(S.gyT[sk]),on:null};
+  if(g.on){gyStopAll();}else{gyStopAll();gyStart(k);g.on=Date.now();}S.gyLast=Date.now();renderAll();}
+function gyPause(){if(!S.started)return;if(S.started.p){gyStart(S.started.k);}else{gyStopAll();S.started.p=Date.now();toast("Timer paused");}renderAll();}
+function gyFinishAsk(){if($("ghpop"))return;const d=DAYS[gyDayI()];if(!d)return;const el=document.createElement("div");el.className="ghpop";el.id="ghpop";
+  el.innerHTML=`<div class="gpc" role="dialog" aria-modal="true" aria-label="Finish workout"><b>Finish ${esc(dname(d))}?</b><p>${gyClock(gyEl())} · your sets, reps, kg and times are saved. You can correct them later in Recent.</p>
+    <button class="big" style="width:100%" data-gyend="save">Finish &amp; Save</button><button class="btn2" style="width:100%;color:var(--red)" data-gyend="stop">Stop Timer – Don't Save Time</button><button class="btn2" style="width:100%" id="hdLater">Keep Going</button></div>`;
+  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"));}
+function gyFinish(at){const i=gyDayI();if(i<0)return;gyStopAll(at);if(at&&S.started&&!S.started.p)S.started.p=Math.max(S.started.t,at);
+  const mins=Math.round(gyEl()/6e4);S.tab="workout";S.view=i;completeWorkout();S.gyRd=null;S.gyLast=null;toast(`Workout saved · ${mins} min`);}
+// bar above the tab bar while a workout runs (all tabs): time, workout, current exercise, pause, finish
+function gyBar(){let b=$("wbar");if(!gyLive()){b?.remove();document.body.classList.remove("wlive");return;}
+  const d=DAYS[gyDayI()],p=planFor(d);let cur="";for(const n of p){if(S.gyT?.[d.key+"|"+n]?.on){cur=n;break;}}
+  if(!cur)for(const n of p){const e=d.lib.find(x=>x[0]===n);if(e&&(S.sets[d.key+"|"+n]||0)<nSets(e,d.key)){cur="Next: "+n;break;}}
+  if(!b){b=document.createElement("div");b.id="wbar";b.className="wbar";document.body.appendChild(b);}document.body.classList.add("wlive");
+  const pz=!!S.started.p;b.innerHTML=`<button class="wbt" data-gyopen="1" aria-label="Open ${esc(dname(d))}"><b id="wbT" class="${pz?"pz":""}">${gyClock(gyEl())}</b><span>${pz?"Paused · ":""}${esc(dname(d))}<i>${esc(cur||"Ready to finish")}</i></span></button>
+    <button class="wbp" data-gypz="1" aria-label="${pz?"Resume":"Pause"}">${pz?G.play:'<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="5" width="4" height="14" rx="1.2"/><rect x="14" y="5" width="4" height="14" rx="1.2"/></svg>'}</button><button class="wbf" data-gyfin="1">Finish</button>`;}
+setInterval(()=>{if(document.hidden)return;if(S.started&&!S.started.p)for(const id of ["wbT","dsT","hsT"]){const t=$(id);if(t)t.textContent=gyClock(gyEl());}
+  document.querySelectorAll("[data-xk]").forEach(x=>{x.textContent=gyClock(gxMs(S.gyT?.[x.dataset.xk]));});if(!!$("wbar")!==gyLive())gyBar();},1000);
 
-function gymMini(){let m=$("gymini");const show=gyLive()&&!GY;if(!show){m?.remove();return;}
-  const d=DAYS.find(x=>x.key===S.started.k),p=planFor(d);let nx="";for(const n of p){const e=d.lib.find(x=>x[0]===n);if(!e)continue;const ns=nSets(e),dn=Math.min(S.sets[d.key+"|"+n]||0,ns);if(dn<ns){nx=`${n} · set ${dn+1}/${ns}`;break;}}
-  const pos=S.gymPos||{side:"r",y:.74,hide:false};
-  if(!m){m=document.createElement("div");m.id="gymini";document.body.appendChild(m);gyDrag(m);}
-  m.className=`gymini ${pos.side} ${pos.hide?"hid":""}`;m.style.top=`calc(${(pos.y*100).toFixed(1)}% - 32px)`;
-  m.innerHTML=pos.hide?`<button class="gmtab" data-gmshow="1" aria-label="Show workout timer">${GARR(pos.side==="r"?"l":"r")}</button>`
-    :`<button class="gmhide" data-gmhide="1" aria-label="Hide workout timer">${GARR(pos.side)}</button><button class="gmbox" data-gmopen="1" aria-label="Back to Gym Mode"><b id="gmT">${gyClock(gyEl())}</b><span>${S.started.p?"Paused · ":""}${esc(dname(d))}</span>${nx?`<i>${esc(nx)}</i>`:'<i>Ready to finish</i>'}</button>`;}
-function gyDrag(m){let sy=0,sx=0,y0=0,mv=false;
-  m.addEventListener("touchstart",e=>{const t=e.touches[0];sy=t.clientY;sx=t.clientX;y0=m.getBoundingClientRect().top;mv=false;},{passive:true});
-  m.addEventListener("touchmove",e=>{const t=e.touches[0];if(Math.abs(t.clientY-sy)+Math.abs(t.clientX-sx)>8)mv=true;if(mv){e.preventDefault();m.style.top=Math.max(60,Math.min(innerHeight-130,y0+t.clientY-sy))+"px";m.style.transform=`translateX(${t.clientX-sx}px)`;}},{passive:false});
-  m.addEventListener("touchend",e=>{if(!mv)return;const t=e.changedTouches[0],r=m.getBoundingClientRect();m.style.transform="";
-    S.gymPos={side:t.clientX<innerWidth/2?"l":"r",y:Math.max(.1,Math.min(.85,(r.top+32)/innerHeight)),hide:!!S.gymPos?.hide};save();gymMini();m._skip=Date.now();});}
-setInterval(()=>{const t=$("gmT");if(t&&S.started)t.textContent=gyClock(gyEl());if(!!$("gymini")!==(gyLive()&&!GY))gymMini();},1000);
-document.addEventListener("click",ev=>{const b=ev.target.closest("button");if(!b)return;const ds=b.dataset;
-  if($("gymini")?._skip>Date.now()-400&&b.closest("#gymini"))return;
-  if(b.id==="gyPip"){gymFloat();return;}
-  if(ds.gmopen){gymOpen(DAYS.findIndex(d=>d.key===S.started.k));return;}
-  if(ds.gmhide||ds.gmshow){S.gymPos={side:"r",y:.74,...(S.gymPos||{}),hide:!!ds.gmhide};save();gymMini();}
+// mode button (right end of Start): Gym / Walking / Swimming / Running — walk, swim and run come from Fitbit (full views in 4d-2)
+const GMODES={gym:["Gym","Start Gym Mode",G.play],walk:["Walking","Start Walking",G.walk],swim:["Swimming","Start Swimming",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17c2 0 2-1.5 4-1.5S8 17 10 17s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M8 13l3-4 3 2 3-3"/><circle cx="17" cy="5" r="1.8"/></svg>'],run:["Running","Start Running",G.run]};
+const gyFit=m=>{const re={walk:/walk|hik/i,swim:/swim/i,run:/run/i}[m];return [...(HD?.ex||[])].filter(e=>re.test((e.type||"")+" "+(e.name||""))).sort((a,b)=>(a.start>b.start?1:-1)).pop();};
+function gyModeHTML(){const m=GMODES[S.mode]?S.mode:"gym",live=gyLive();let last="";
+  if(m==="gym"){const x=[...S.sessions].reverse()[0],d=x&&dayByKey(x.k);last=d?`Last: ${dname(d)} · ${fmtD(x.d,{day:"numeric",month:"short"})}${x.mins?` · ${x.mins} min`:""}`:"No gym sessions yet";}
+  else{const e=gyFit(m);last=e?`Last: ${fmtD(String(e.start).slice(0,10),{day:"numeric",month:"short"})} · ${Math.round((e.dur||0)/60)} min${e.km?` · ${r1(e.km)} km`:""}`:"No Fitbit sessions yet";}
+  const lab=m==="gym"&&live?`${S.started.p?"Resume Workout":"Continue Workout"} · <span id="hsT">${gyClock(gyEl())}</span>`:GMODES[m][1];
+  return `<p class="gylast">${esc(last)}</p><div class="gyrow"><button class="big gystart" id="gymStart">${GMODES[m][2]}${lab}</button><button class="gymode" id="gyMode" aria-label="Change mode: ${GMODES[m][0]}" aria-haspopup="menu">${GMODES[m][2]}<svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10l5 5 5-5"/></svg></button></div>`;}
+function gyModeMenu(){if($("ghpop"))return;const el=document.createElement("div");el.className="ghpop";el.id="ghpop";const cur=GMODES[S.mode]?S.mode:"gym";
+  el.innerHTML=`<div class="gpc gmm" role="menu" aria-label="Mode"><b>Mode</b>${Object.entries(GMODES).map(([k,v])=>`<button class="cell action ${k===cur?"on":""}" role="menuitemradio" aria-checked="${k===cur}" data-gymode="${k}">${v[2]}<span class="lbl">${v[0]}</span>${k===cur?G.check:""}</button>`).join("")}<p>Walking, swimming and running come from your Fitbit.</p></div>`;
+  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"));}
+
+// leaving the gym without tapping Finish: on reopening away from the gym (or 3 h after the last tap) the workout ends at the last tap
+let gyAway=false;
+async function gyLeftCheck(){if(!gyLive()||S.started.p||$("ghpop")||gyAway)return;const last=S.gyLast||S.started.t,g=S.gym;let away=Date.now()-last>3*36e5;
+  if(!away&&g&&g.lat!=null){try{const c=await gyPos();away=gyDist(g.lat,g.lon,c.latitude,c.longitude)>(g.r||150)+200+Math.min(c.accuracy||0,100);}catch(e){}}
+  if(!away||!gyLive()||$("ghpop"))return;gyAway=true;const at=Math.max(last,S.started.t),mins=Math.round((at-S.started.t)/6e4),d=DAYS[gyDayI()];
+  const el=document.createElement("div");el.className="ghpop";el.id="ghpop";
+  el.innerHTML=`<div class="gpc" role="dialog" aria-modal="true" aria-label="Workout still running"><b>You've left the gym</b><p>${esc(dname(d))} is still running. Save it ending at your last tap (${new Date(at).toLocaleTimeString([],{hour:"numeric",minute:"2-digit"})}, ${mins} min)?</p>
+    <button class="big" style="width:100%" data-gyaway="${at}">Save Workout</button><button class="btn2" style="width:100%" id="hdLater">Keep Going</button></div>`;
+  document.body.appendChild(el);requestAnimationFrame(()=>el.classList.add("open"));}
+addEventListener("load",()=>{setTimeout(()=>{gyLeftCheck().then(()=>{if(!$("ghpop"))gymArrive();});},1500);gyBar();});
+document.addEventListener("visibilitychange",()=>{if(!document.hidden){gyAway=false;setTimeout(()=>{gyLeftCheck().then(()=>{if(!$("ghpop"))gymArrive();});},800);gyBar();}});
+
+// correct a finished workout (Recent list → tap)
+function gyEditSess(i){const x=S.sessions[i];if(!x)return;const d=dayByKey(x.k);const names=[...new Set([...Object.keys(x.w||{}),...Object.keys(x.x||{}),...Object.keys(x.r||{})])];
+  const vals={date:x.d,mins:x.mins??"",done:x.done,cm:x.cm||""};names.forEach((n,j)=>{vals["kg"+j]=x.w?.[n]??"";vals["mn"+j]=x.x?.[n]??"";vals["rp"+j]=(x.r?.[n]||[]).join(", ");});
+  openForm({title:d?dname(d):"Workout",values:vals,groups:[{title:"Workout",fields:[{k:"date",label:"Date",type:"date"},{k:"mins",label:"Total time",unit:"min"},{k:"done",label:"Sets done",unit:`of ${x.total}`},{k:"cm",label:"Cardio",unit:"min"}]},
+    ...names.map((n,j)=>({title:n,fields:[{k:"kg"+j,label:"Weight",unit:"kg"},{k:"rp"+j,label:"Reps per set",type:"text",ph:"e.g. 10, 10, 8"},{k:"mn"+j,label:"Time",unit:"min"}]}))],
+    foot:"",onSave:v=>{if(v.date)x.d=v.date;if(v.mins!=null)x.mins=v.mins;else delete x.mins;if(v.done!=null)x.done=Math.min(v.done,x.total);x.cm=v.cm||0;
+      names.forEach((n,j)=>{const kg=v["kg"+j],mn=v["mn"+j],rp=String(v["rp"+j]||"").split(/[,\s]+/).map(Number).filter(z=>z>0);
+        x.w=x.w||{};if(kg)x.w[n]=kg;else delete x.w[n];x.x=x.x||{};if(mn)x.x[n]=mn;else delete x.x[n];x.r=x.r||{};if(rp.length)x.r[n]=rp;else delete x.r[n];});
+      S.sessions.sort((a,b)=>a.d<b.d?-1:a.d>b.d?1:0);toast("Workout updated");},
+    onDelete:()=>{S.sessions.splice(S.sessions.indexOf(x),1);S.count=Math.max(0,S.count-1);toast("Workout deleted");}});}
+
+// your own exercise (Add Exercise sheet → Create Your Own)
+function gyAddCustom(){const d=D(),k=d.key;openForm({title:"New Exercise",values:{sets:3,reps:"10"},groups:[{fields:[{k:"name",label:"Name",type:"text",ph:"e.g. Cable crunch"},{k:"grp",label:"Muscle group",type:"text",ph:d.groups[0]},{k:"sets",label:"Sets"},{k:"reps",label:"Reps",type:"text",ph:"10–12"}],foot:"It's added to this workout and stays in its exercise list."}],
+  onSave:v=>{const n=String(v.name||"").trim();if(!n)return toast("Give it a name first");if(d.lib.some(e=>e[0].toLowerCase()===n.toLowerCase()))return toast("That exercise is already in the list");
+    const e=[n,String(v.grp||"").trim()||"Other","Your own",`${Math.max(1,Math.min(10,Math.round(v.sets||3)))} × ${String(v.reps||"10").trim()}`];S.custom=S.custom||{};(S.custom[k]=S.custom[k]||[]).push(e);d.lib.push(e);
+    const p=plan();if(p.length<MAX)p.push(n);toast(p.includes(n)?`${n} added`:"Saved in the list · your workout is full (7)");}});}
+function gyLoadCustom(){for(const k in S.custom||{}){const d=dayByKey(k);if(d)for(const e of S.custom[k])if(!d.lib.some(x=>x[0]===e[0]))d.lib.push(e);}}
+gyLoadCustom();renderAll();
+
+document.addEventListener("click",ev=>{const b=ev.target.closest("button");
+  const ex=!b&&ev.target.closest?.(".ex[data-exn] .exh");if(ex&&S.view!=null&&!S.edit){gyTap(ex.closest(".ex").dataset.exn);return;}
+  if(!b)return;const ds=b.dataset;
+  if(ds.gyhello){$("ghpop")?.remove();gymPick();return;}
+  if(ds.gygo!=null){$("ghpop")?.remove();const r=gymReady();S.gyRd=r?{sc:r.sc,lv:r.lv}:null;const i=+ds.gygo;S.tab="workout";S.view=i;S.edit=false;gyStart(DAYS[i].key);renderAll();scrollTo({top:0});return;}
+  if(b.id==="gymStart"){const m=GMODES[S.mode]?S.mode:"gym";if(m!=="gym"){S.tab="activity";S.view=null;renderAll();scrollTo({top:0});toast(`Start ${GMODES[m][0].toLowerCase()} on your Fitbit · it shows here after sync`);return;}
+    if(gyLive()){S.view=gyDayI();renderAll();scrollTo({top:0});return;}gymPick();return;}
+  if(b.id==="gyMode"){gyModeMenu();return;}
+  if(ds.gymode){$("ghpop")?.remove();S.mode=ds.gymode;renderAll();return;}
+  if(b.id==="gymHere"){const k=D().key;if(gyLive()&&S.started.k===k){gyPause();return;}if(gyLive()){toast(`${dname(DAYS[gyDayI()])} is running · finish it first`);return;}gyStart(k);renderAll();return;}
+  if(ds.gyopen){S.tab="workout";S.view=gyDayI();S.edit=false;renderAll();scrollTo({top:0});return;}
+  if(ds.gypz){gyPause();return;}
+  if(ds.gyfin){gyFinishAsk();return;}
+  if(ds.gyend){$("ghpop")?.remove();if(ds.gyend==="save")gyFinish();else{gyStopAll();S.started=null;renderAll();toast("Timer stopped · your sets are kept");}return;}
+  if(ds.gyaway){$("ghpop")?.remove();gyFinish(+ds.gyaway);return;}
+  if(ds.gyrp){const sk=D().key+"|"+ds.gyrp,e=find(ds.gyrp),dn=S.sets[sk]||0;S.rpc=S.rpc||{};S.rpc[sk]=Math.max(1,Math.min(100,(S.rpc[sk]??gyRep(D().key,ds.gyrp,e,dn))+ +ds.gyd));renderAll();return;}
+  if(ds.gyns){const sk=D().key+"|"+ds.gyns,e=find(ds.gyns);S.nsx=S.nsx||{};const v=Math.max(1,Math.min(10,nSets(e,D().key)+ +ds.gyd));if(v===(parseInt(e[3])||3))delete S.nsx[sk];else S.nsx[sk]=v;renderAll();return;}
+  if(b.id==="gyCustom"){closeSheets();setTimeout(gyAddCustom,250);return;}
+  if(ds.sess!=null){gyEditSess(+ds.sess);return;}
 });

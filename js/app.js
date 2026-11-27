@@ -33,7 +33,7 @@ function norm(){S.edit=false;S.view=null;S.look=S.look==="glass"?"dark":(S.look|
   for(const k of ["log","sessions","checkups","body"])S[k]=S[k]||[];
   S.tab=S.tab||"workout";S.hseg=S.hseg||"checkups";S.filter=S.filter||"All";
   if(S.planVer!==2){S.plans=JSON.parse(JSON.stringify(DEFAULT));S.sets={};S.checks={};S.planVer=2;}
-  S.swaps=S.swaps||{};S.vids=S.vids||{};S.phx=S.phx||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
+  delete S.gyFloat;delete S.gymPos;S.swaps=S.swaps||{};S.vids=S.vids||{};S.phx=S.phx||{};S.prog=PROGRAMS[S.prog]?S.prog:"split4";S.nextBy=S.nextBy||{split4:S.day||0};
   DAYS=PROGRAMS[S.prog].days;S.day=Math.min(S.nextBy[S.prog]||0,DAYS.length-1);}
 function setProg(p){S.nextBy[S.prog]=S.day;S.prog=p;DAYS=PROGRAMS[p].days;S.day=Math.min(S.nextBy[p]||0,DAYS.length-1);S.view=null;S.edit=false;}
 const dayByKey=k=>ALLDAYS.find(d=>d.key===k);
@@ -66,7 +66,7 @@ let resetArm=false;
 // ---------- workout helpers ----------
 const D=()=>DAYS[S.view??S.day];
 const find=n=>D().lib.find(e=>e[0]===n);
-const nSets=e=>parseInt(e[3])||3;
+const nSets=(e,k)=>(k&&S.nsx?.[k+"|"+e[0]])||parseInt(e[3])||3; // S.nsx = your own set count per exercise
 function rankIn(d,n){const sw=S.swaps[d.key]||{},o=Object.keys(sw).find(x=>sw[x]===n);if(o)n=o;const def=DEFAULT[d.key],i=def.indexOf(n);if(i>=0)return i;
   const e=d.lib.find(x=>x[0]===n),g=e?e[1]:"";let pos=-1;def.forEach((m,j)=>{const f=d.lib.find(x=>x[0]===m);if(f&&f[1]===g)pos=j;});
   return (pos>=0?pos:def.length)+0.5+d.lib.findIndex(x=>x[0]===n)/1000;}
@@ -110,15 +110,15 @@ function autoPick(){const d=D();S.plans[d.key]=[];const p=plan();fillGaps();
   const left=shuffle(d.lib.map(e=>e[0]).filter(n=>!p.includes(n)));
   const rest=[...left.filter(n=>tierOf(d.key,n)==="r"),...left.filter(n=>tierOf(d.key,n)==="o")];while(p.length<TARGET&&rest.length)p.push(rest.shift());p.sort((a,b)=>rankIn(d,a)-rankIn(d,b));
   clearProgress(d.key);renderAll();toast("New workout, every area covered");}
-function clearProgress(k){Object.keys(S.sets).forEach(x=>x.startsWith(k+"|")&&delete S.sets[x]);for(const o of [S.reps,S.gyT])if(o)Object.keys(o).forEach(x=>x.startsWith(k+"|")&&delete o[x]);Object.keys(S.checks).forEach(x=>x.startsWith(k)&&delete S.checks[x]);}
+function clearProgress(k){Object.keys(S.sets).forEach(x=>x.startsWith(k+"|")&&delete S.sets[x]);for(const o of [S.reps,S.gyT,S.rpc])if(o)Object.keys(o).forEach(x=>x.startsWith(k+"|")&&delete o[x]);Object.keys(S.checks).forEach(x=>x.startsWith(k)&&delete S.checks[x]);}
 const minsOf=x=>parseInt(x[2])||0;
 function cardioPending(k){let m=S.checks[k+"w0"]?minsOf(WARM[k][0]):0;FIN[k].forEach((f,i)=>{if(S.checks[k+"f"+i]&&f[4]!=="s")m+=minsOf(f)});return m;}
 const cardioGoal=k=>minsOf(WARM[k][0])+FIN[k].filter(f=>f[3]==="m"&&f[4]!=="s").reduce((a,f)=>a+minsOf(f),0);
 const weekCardio=()=>{const ws=weekStart();return S.log.filter(x=>x.d>=ws).reduce((a,x)=>a+x.m,0)+DAYS.reduce((a,d)=>a+cardioPending(d.key),0);};
 const weekSessions=()=>{const ws=weekStart();return S.sessions.filter(x=>x.d>=ws).length;};
-function dayStats(d){const p=planFor(d);let total=0,done=0;p.forEach(n=>{const e=d.lib.find(x=>x[0]===n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[d.key+"|"+n]||0,ns);});
+function dayStats(d){const p=planFor(d);let total=0,done=0;p.forEach(n=>{const e=d.lib.find(x=>x[0]===n);if(!e)return;const ns=nSets(e,d.key);total+=ns;done+=Math.min(S.sets[d.key+"|"+n]||0,ns);});
   const mm=l=>l.filter(x=>x[3]==="m").reduce((a,x)=>a+minsOf(x),0);
-  const strong=p.reduce((a,n)=>{const e=d.lib.find(x=>x[0]===n);return a+(e&&isStrong(d.key,n)?nSets(e):0);},0),lift=Math.round(total*2+strong);
+  const strong=p.reduce((a,n)=>{const e=d.lib.find(x=>x[0]===n);return a+(e&&isStrong(d.key,n)?nSets(e,d.key):0);},0),lift=Math.round(total*2+strong);
   return {p,total,done,lift,warm:mm(WARM[d.key]),cardio:mm(FIN[d.key]),mins:p.length?mm(WARM[d.key])+lift+mm(FIN[d.key]):0};}
 
 // ---------- shared UI ----------
@@ -201,11 +201,11 @@ let FORM=null;
 function openForm(cfg){FORM=cfg;$("formTitle").textContent=cfg.title;
   const v=cfg.values||{};
   const row=f=>f.type==="note"?`<textarea class="note" id="f_${f.k}" aria-label="${f.label}" placeholder="${esc(f.ph||"")}">${esc(v[f.k]??"")}</textarea>`
-    :`<label class="cell field"><span class="t1">${f.label}</span><input id="f_${f.k}" type="${f.type||"number"}" ${f.type==="date"?`max="${today()}"`:`inputmode="decimal" step="any" placeholder="${esc(f.ph||"—")}"`} value="${esc(v[f.k]??"")}">${f.unit!=null?`<span class="u">${f.unit}</span>`:""}</label>`;
+    :`<label class="cell field"><span class="t1">${f.label}</span><input id="f_${f.k}" type="${f.type||"number"}" ${f.type==="date"?`max="${today()}"`:f.type==="text"?`placeholder="${esc(f.ph||"")}" autocomplete="off"`:`inputmode="decimal" step="any" placeholder="${esc(f.ph||"—")}"`} value="${esc(v[f.k]??"")}">${f.unit!=null?`<span class="u">${f.unit}</span>`:""}</label>`;
   let html="";(cfg.groups||[{fields:cfg.fields}]).forEach(g=>{html+=`${g.title?`<div class="lh">${g.title}</div>`:'<div style="height:14px"></div>'}<div class="group">${g.fields.map(row).join("")}</div>${g.foot?`<p class="lf">${g.foot}</p>`:""}`;});
   if(cfg.onDelete)html+=`<div style="height:26px"></div><div class="group"><button class="cell delrow" id="formDel">Delete</button></div>`;
   $("formBody").innerHTML=html;openSheet("form");}
-function readForm(){const out={};$$("#formBody [id^=f_]").forEach(el=>{const k=el.id.slice(2);out[k]=el.type==="date"||el.tagName==="TEXTAREA"?el.value.trim():num(el.value);});return out;}
+function readForm(){const out={};$$("#formBody [id^=f_]").forEach(el=>{const k=el.id.slice(2);out[k]=el.type==="date"||el.type==="text"||el.tagName==="TEXTAREA"?el.value.trim():num(el.value);});return out;}
 
 // ---------- routing ----------
 const screenName=()=>S.tab==="workout"?(S.view!=null?"day":"workout"):S.tab;
@@ -225,23 +225,23 @@ function renderAll(){
   $$(".bback").forEach(b=>b.hidden=scr!=="day");
   $("nav").innerHTML=TABS.map(([k,n,ic])=>`<button class="${S.tab===k?"on":""}" data-tab="${k}" style="--c:var(--tint)" ${S.tab===k?'aria-current="page"':""}>${ic}${n}</button>`).join("");
   ({workout:renderHome,day:renderDay,activity:renderActivity,health:renderHealth,insights:renderInsights})[scr]();
-  onScroll();save();
+  gyBar();onScroll();save();
 }
 
 // ---------- 1 · workout home ----------
 function renderHome(){
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   $("homeSum").innerHTML=rings([["Workouts",weekSessions(),4,"THIS WEEK","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Habits",n,HABITS.length,"TODAY","--ring3"]])
-    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div><button class="big gystart" id="gymStart">${G.play}Start Gym Mode</button>`;
+    +`<div class="sumfoot"><span>Up next</span><span><b>Day ${S.day+1} · ${dname(DAYS[S.day])}</b></span></div>${gyModeHTML()}`;
   $("progName").textContent=PROGRAMS[S.prog].name;$("days").classList.toggle("n3",DAYS.length===3);
   $("days").innerHTML=DAYS.map((d,i)=>{const st=dayStats(d),last=[...S.sessions].reverse().find(x=>x.k===d.key),prog=st.done&&st.done<st.total?` · ${st.done}/${st.total} done`:"";
     const im=ph(DAYPH[d.key],true);
     return `<button class="dcard ${i===S.day?"next":""} ${im?"ph":""}" data-open="${i}" style="--c:var(${d.color})${im?`;--img:url(${im})`:""}" aria-label="Day ${i+1}, ${dname(d)}${i===S.day?", up next":""}">
       ${i===S.day?'<span class="badge">Up next</span>':""}<span class="dic">${G.tab[d.icon]}</span><span class="dn">Day ${i+1}</span><span class="dt">${dname(d)}</span>
       <span class="dm">${st.p.length} exercises · ~${st.mins} min${prog}<br>${last?`Last done ${fmtD(last.d)}`:"Not done yet"}</span></button>`;}).join("");
-  const rec=[...S.sessions].reverse().slice(0,6);
-  $("recent").innerHTML=rec.length?rec.map(x=>{const d=dayByKey(x.k);if(!d)return"";return `<div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(${d.color})">${G.tab[d.icon]}</span><span class="ct"><span class="t1">${dname(d)}</span><span class="t2">${x.done}/${x.total} sets${x.cm?` · ${x.cm} min cardio`:""}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span></div>`}).join("")
-    :emptyCell("No workouts yet","Finished workouts will show here.");
+  const rec=S.sessions.map((x,i)=>({...x,i})).reverse().slice(0,6);
+  $("recent").innerHTML=rec.length?rec.map(x=>{const d=dayByKey(x.k);if(!d)return"";return `<button class="cell" style="--inset:58px" data-sess="${x.i}" aria-label="Edit ${dname(d)}, ${fmtD(x.d)}"><span class="itile" style="--ic:var(${d.color})">${G.tab[d.icon]}</span><span class="ct"><span class="t1">${dname(d)}</span><span class="t2">${x.done}/${x.total} sets${x.mins?` · ${x.mins} min`:""}${x.cm?` · ${x.cm} min cardio`:""}</span></span><span class="acc">${fmtD(x.d,{day:"numeric",month:"short"})}</span><span class="chev">›</span></button>`}).join("")
+    :emptyCell("No workouts yet","Finished workouts will show here. Tap one to correct times, reps or weights.");
 }
 
 // ---------- 1b · day detail ----------
@@ -252,12 +252,13 @@ function renderDay(){
   const rows=(id,list)=>list.map((w,i)=>{const ck=k+id+i;return `<label class="cell chk"><input type="checkbox" class="circ" id="c-${ck}" data-ck="${ck}" ${S.checks[ck]?"checked":""}><span class="ct"><span class="t1">${esc(w[0])}</span><span class="t2">${tierTag(w[3])}${esc(w[1])}</span></span><span class="acc">${esc(w[2])}</span>${play(w[0],id==="w"?"warm up how to":"workout",true)}</label>`}).join("");
   $("warm").innerHTML=rows("w",WARM[k]);$("fin").innerHTML=rows("f",FIN[k]);
   let total=0,done=0;
-  $("plan").innerHTML=p.length?p.map((n,i)=>{const e=find(n);if(!e)return"";const ns=nSets(e),sk=k+"|"+n,dn=Math.min(S.sets[sk]||0,ns);total+=ns;done+=dn;
-    const ess=isEss(k,n),tr=tierOf(k,n),complete=dn===ns;
+  $("plan").innerHTML=p.length?p.map((n,i)=>{const e=find(n);if(!e)return"";const ns=nSets(e,k),sk=k+"|"+n,dn=Math.min(S.sets[sk]||0,ns);total+=ns;done+=dn;
+    const ess=isEss(k,n),tr=tierOf(k,n),complete=dn===ns,on=!!S.gyT?.[sk]?.on,xms=gxMs(S.gyT?.[sk]),rnow=S.rpc?.[sk]??gyRep(k,n,e,dn),rp=S.reps?.[sk]||[];
     const lead=S.edit?(ess?`<span class="lockg" title="Must-do exercises stay in your plan">${G.lock}</span>`:`<button class="del" data-rm="${esc(n)}" aria-label="Remove ${esc(n)}">${G.minus}</button>`):"";
-    return `<article class="ex ${complete?"done":""}"><div class="exh">${lead}<span class="tile" aria-hidden="true">${complete?G.check:i+1}</span>
-      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(e[3])} · ${esc(areaOf(k,n))}</span>${exNotes(k,n,p)}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n,undefined,false,ph(GRPPH[e[1]]||DAYPH[k],true))}</div>
-      <div class="sets">${Array.from({length:ns},(_,j)=>`<button class="set ${j<dn?"on":""}" data-set="${esc(n)}" data-i="${j}" aria-label="Set ${j+1}${j<dn?", done":""}">${j+1}</button>`).join("")}
+    return `<article class="ex ${complete?"done":""} ${on?"act":""}" data-exn="${esc(n)}"><div class="exh">${lead}<span class="tile" aria-hidden="true">${complete?G.check:i+1}</span>
+      <div class="ct"><span class="t1">${esc(n)}</span><span class="t2">${tierTag(tr)}${esc(ns+" × "+(String(e[3]).split("×")[1]||"").trim())}${areaOf(k,n)?" · "+esc(areaOf(k,n)):""}</span>${exNotes(k,n,p)}${on||xms?`<span class="xtm ${on?"on":""}"><i></i><b data-xk="${esc(sk)}">${gyClock(xms)}</b>${on?"tap to stop":""}</span>`:S.edit?"":`<span class="xtm hint">Tap to start timer</span>`}</div><button class="altb" data-alt="${esc(n)}" aria-label="Alternatives for ${esc(n)}">${G.swap}</button>${play(n,undefined,false,ph(GRPPH[e[1]]||DAYPH[k],true))}</div>
+      <div class="sets">${Array.from({length:ns},(_,j)=>`<button class="set ${j<dn?"on":""}" data-set="${esc(n)}" data-i="${j}" aria-label="Set ${j+1}${j<dn?`, done, ${rp[j]||""} reps`:""}">${j+1}${j<dn&&rp[j]?`<small>${rp[j]}</small>`:""}</button>`).join("")}${S.edit?`<button class="set adj" data-gyns="${esc(n)}" data-gyd="-1" aria-label="One set fewer">−</button>`:""}<button class="set adj" data-gyns="${esc(n)}" data-gyd="1" aria-label="Add a set">+</button></div>
+      <div class="sets2"><span class="rpk"><button data-gyrp="${esc(n)}" data-gyd="-1" aria-label="Fewer reps">−</button><b>${rnow}</b><span>reps</span><button data-gyrp="${esc(n)}" data-gyd="1" aria-label="More reps">+</button></span>
       <label class="kg"><input id="w-${k}-${i}" inputmode="decimal" placeholder="0" data-wt="${esc(n)}" value="${esc(S.wts[sk]||"")}" aria-label="Weight for ${esc(n)}"><span>kg</span></label></div></article>`}).join("")
     :`<div class="group">${emptyCell("No Exercises","Tap Shuffle Workout or Add Exercise.")}</div>`;
   const miss=missing(),areas=Object.keys(AREAS[k]),cnt=t=>p.filter(n=>tierOf(k,n)===t).length;
@@ -272,7 +273,7 @@ function renderDay(){
   const warmDone=WARM[k].filter((_,i)=>S.checks[k+"w"+i]).length;
   const ds0=dayStats(d),mins=ds0.mins;
   $("daySum").innerHTML=rings([["Sets",done,total,"SETS","--tint"],["Cardio",cardioPending(k),cardioGoal(k),"MIN","--ring2"],["Warm-up",warmDone,WARM[k].length,"DONE","--ring3"]])
-    +`<div class="sumfoot"><span>Warm-up <b>${ds0.warm}</b></span><span>Lifting <b>~${ds0.lift}</b></span><span>Cardio <b>${ds0.cardio}</b></span><span style="${mins>65?"color:var(--orange)":""}">= <b>${mins}</b> min</span></div>${mins>65?`<p class="gf" style="padding:0;color:var(--orange)">Longer than an hour. Short on time? Skip an optional exercise or cut the walk to 10 minutes.</p>`:""}<button class="big gystart" id="gymHere">${G.play}${S.started&&S.started.k===k?"Resume Gym Mode":"Start Gym Mode"}</button>`;
+    +`<div class="sumfoot"><span>Warm-up <b>${ds0.warm}</b></span><span>Lifting <b>~${ds0.lift}</b></span><span>Cardio <b>${ds0.cardio}</b></span><span style="${mins>65?"color:var(--orange)":""}">= <b>${mins}</b> min</span></div>${mins>65?`<p class="gf" style="padding:0;color:var(--orange)">Longer than an hour. Short on time? Skip an optional exercise or cut the walk to 10 minutes.</p>`:""}${gyLive()&&S.started.k===k?`<button class="big gystart ${S.started.p?"":"live"}" id="gymHere">${S.started.p?G.play+"Resume":"Pause"} · <span id="dsT">${gyClock(gyEl())}</span></button>`:`<button class="big gystart" id="gymHere">${G.play}Start Workout</button>`}`;
   $("warmMin").textContent=ds0.warm+" min";$("cardMin").textContent=ds0.cardio+" min";
   $("cardNote").textContent=(S.prog==="ul"?"After every session: a steady incline walk. On rest days, a 30-minute brisk walk. ":"Intervals and steady Zone 2 walking both help heart health and fat loss. ")+"Keep any intervals at 70–80% effort until your doctor clears you for harder work. Stop if you feel chest pain, dizziness or unusual breathlessness.";
   const last=[...S.sessions].reverse().find(x=>x.k===k);
@@ -292,11 +293,12 @@ function renderLib(){
     return `<div class="lh">${t==="m"?G.star:""}${TIERS[t]} · ${items.length}</div><div class="group">${items.map(e=>{const inn=p.includes(e[0]),ess=t==="m";
       return `<div class="cell lib"><div class="ct"><span class="t1">${esc(e[0])}</span><span class="t2">${esc(areaOf(d.key,e[0]))} · ${esc(e[2])} · ${esc(e[3])}</span></div>${play(e[0],"proper form",true)}${ess?`<span class="lockg" aria-label="Locked in">${G.lock}</span>`:`<button class="addc ${inn?"in":""}" data-add="${esc(e[0])}" aria-label="${inn?"Remove":"Add"} ${esc(e[0])}">${inn?G.checkc:G.plusc}</button>`}</div>`}).join("")}</div><p class="lf">${note[t]}</p>`}).join("")
     ||emptyCell("No Results","Try a different name, muscle or equipment.");
+  $("lib").insertAdjacentHTML("beforeend",`<div class="group" style="margin-top:18px"><button class="cell action" id="gyCustom">${G.addRow}<span class="lbl">Create Your Own Exercise</span></button></div>`);
 }
 
 function completeWorkout(){
   const d=D(),k=d.key,p=plan();let done=0,total=0;const w={},r={},x={};
-  p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;const rp=S.reps?.[k+"|"+n];if(rp&&rp.length)r[n]=rp.slice();const gt=S.gyT?.[k+"|"+n];if(gt&&gt.e)x[n]=Math.round((gt.e-gt.s)/6e3)/10;});
+  p.forEach(n=>{const e=find(n);if(!e)return;const ns=nSets(e,k);total+=ns;done+=Math.min(S.sets[k+"|"+n]||0,ns);const kg=num(S.wts[k+"|"+n]);if(kg)w[n]=kg;const rp=S.reps?.[k+"|"+n];if(rp&&rp.length)r[n]=rp.slice();const ms=gxMs(S.gyT?.[k+"|"+n]);if(ms>=6e3)x[n]=Math.round(ms/6e3)/10;});
   const cm=cardioPending(k);
   if(cm){S.log=S.log.filter(x=>x.d>=daysAgo(60));S.log.push({d:today(),m:cm});}
   const el=S.started?(S.started.p||Date.now())-S.started.t:0,st=S.started&&S.started.k===k&&el<6*36e5?Math.round(el/6e4):null;S.started=null;
@@ -576,7 +578,8 @@ document.addEventListener("click",ev=>{
   if(ds.alt){openAlts(ds.alt);return;}
   if(ds.swapto){swapEx(D().key,ALTFOR,ds.swapto);closeSheets();renderAll();toast(`Swapped to ${ds.swapto}`);return;}
   if(ds.prog){if(ds.prog!==S.prog){setProg(ds.prog);renderAll();toast(`Switched to ${PROGRAMS[ds.prog].name}`);}renderSettings();return;}
-  if(ds.set){const k=D().key+"|"+ds.set,i=+ds.i,was=S.sets[k]||0;S.sets[k]=was>i?i:i+1;renderAll();if(S.sets[k]>was){const nx=nextInSuper(D().key,ds.set,plan());if(nx)toast(`Now ${nx}, then rest`);else startRest(isStrong(D().key,ds.set)?Math.max(150,S.rest.main):isEss(D().key,ds.set)?S.rest.main:S.rest.other);}return;}
+  if(ds.set){const dk=D().key,k=dk+"|"+ds.set,i=+ds.i,was=S.sets[k]||0,e=find(ds.set);S.sets[k]=was>i?i:i+1;S.reps=S.reps||{};const rr=S.reps[k]=S.reps[k]||[];
+    if(S.sets[k]>was){const rv=S.rpc?.[k]??gyRep(dk,ds.set,e,was);for(let j=was;j<S.sets[k];j++)rr[j]=rv;if(!gyLive())gyStart(dk);else if(S.started.k===dk&&S.started.p)gyStart(dk,true);S.gyLast=Date.now();if(S.sets[k]>=nSets(e,dk)&&S.gyT?.[k]?.on)gyStopAll();}rr.length=Math.min(rr.length,S.sets[k]);renderAll();if(S.sets[k]>was){const nx=nextInSuper(D().key,ds.set,plan());if(nx)toast(`Now ${nx}, then rest`);else startRest(isStrong(D().key,ds.set)?Math.max(150,S.rest.main):isEss(D().key,ds.set)?S.rest.main:S.rest.other);}return;}
   switch(t.id){
     case "edit":S.edit=!S.edit;renderAll();break;
     case "auto":autoPick();break;
@@ -628,5 +631,5 @@ function tick(){const ms=Math.max(0,end-Date.now()),left=Math.ceil(ms/1000);
 function stopRest(){clearInterval(timer);$("rest").hidden=true;}
 
 applyLook();applyAccent();phLoad().then(()=>{if(Object.keys(PHD).length)renderAll();});
-renderAll();
+// first renderAll() runs at the end of js/gym.js (it needs the gym list helpers)
 if(LOADWARN)setTimeout(()=>toast(LOADWARN),600);

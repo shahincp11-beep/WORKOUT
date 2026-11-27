@@ -28,7 +28,11 @@
 - Auto sync on open / return to app if older than ~1 h; `?sync=1` forces a sync, `?start=1` asks which workout (for iOS Shortcuts).
 - Reconnect pop-up when Google sign-in expires. Settings → Sync shows failed types and today's raw values.
 
-## Gym Mode (Phase 4c)
-- `js/gym.js` – arrival check (S.gym={lat,lon,r,ask,lastAsk}, Settings → Gym Mode), "You're at the gym" pop-up, readiness score + suggested load (gymReady: sleep 40, HRV 30, resting HR 20, recent workouts 10), four-workout picker, full-screen Gym Mode (one exercise per page, reps wheel, kg ±, Log Set → rest timer, swipe up).
-- Per set reps in S.reps, exercise times in S.gyT, last log S.gyLast. Session saves r (reps), x (minutes per exercise), rd (readiness), mins (from S.started).
-- Floating timer: img/gymclock.mp4 (silent 2-hour clock) shown in iOS picture-in-picture, seeked to elapsed time; returning to the app opens Gym Mode on the current exercise (S.gyFloat). In-app mini box #gymini with hide arrow (S.gymPos). sw.js never caches .mp4 (range requests).
+## Gym (Phase 4c → 4d-1)
+- `js/gym.js` – arrival check (S.gym, Settings → Gym Mode), "You're at the gym" pop-up, readiness (gymReady), four-workout picker → opens the day page with the timer running.
+- 4d-1 gym list (full-screen Gym Mode, floating timer and gymclock.mp4 removed): S.started={k,t,p?} total time from timestamps (keeps counting in the background); tap an exercise header → its timer (S.gyT[sk]={a,on}, gxMs; old {s,e} still read); one at a time; stops on its last set.
+- Sets: S.reps[sk] reps per set, S.rpc[sk] reps picker, S.nsx[sk] your set count (nSets(e,k)). Bar #wbar above the tab bar on every tab (time, pause, Finish). S.gyLast = last tap.
+- Leaving the gym: on opening the app >gym radius+200 m away (or 3 h after the last tap) → save ending at the last tap.
+- Mode button (S.mode gym/walk/swim/run) on the right of Start; walk/swim/run read HD.ex (full views in 4d-2).
+- Recent list → tap to correct date, time, sets, cardio, kg, reps, minutes or delete. Own exercises: S.custom[dayKey]=[[name,group,"Your own","3 × 10"]] (added to d.lib on load).
+- First renderAll() is at the end of gym.js.
