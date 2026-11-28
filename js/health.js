@@ -22,6 +22,7 @@ function hdDerive(d) {
   const az = d.r_activeZoneMinutes; if (az) { const z = perTag(az, /sum|minutes/i), t = pk(az, /sum/i, ZN); set("azm", t ?? sumv(z)); if (Object.keys(z).length) x.azmZ = z; }
   const am = d.r_activeMinutes; if (am) { const z = perTag(am, /sum|minutes/i); set("amin", sumv(z) ?? pk(am, /sum/i)); if (Object.keys(z).length) x.aminL = z; }
   const hr = d.r_heartRate; if (hr) { set("hrAvg", pk(hr, /(avg|average|mean)$/i) ?? pk(hr, /avg|mean/i)); set("hrMin", pk(hr, /(min|minimum)$/i)); set("hrMax", pk(hr, /(max|maximum)$/i)); }
+  set("swimL", pk(d.r_swimLengthsData, /sum|count|length/i, /millis|meter|pool/i)); // 4d-2: swim laps for the day
   const sd = d.r_sedentaryPeriod; if (sd) set("sed", toMin(sd, pk(sd, /sum|duration/i)));
   const hz = d.r_timeInHeartRateZone; if (hz) { const z = perTag(hz, /./); for (const k in z) z[k] = Math.round(toMin(hz, z[k])); if (Object.keys(z).length) x.hz = z; }
   for (const k of ["rhr", "hrv", "hrvDeep", "nremHr", "spo2", "spo2Lo", "spo2Hi", "br", "temp", "tempBase", "zones"]) if (d[k] != null) x[k] = d[k];

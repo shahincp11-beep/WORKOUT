@@ -200,7 +200,8 @@ async function sync(tok, tz, days) {
   if (ex.err) errs.exercise = ex.err;
   out.ex = ex.pts.map(dp => {
     const v = val(dp, "exercise"), iv = v.interval || {}, m = v.metricsSummary || {}, z = m.heartRateZoneDurations || {};
-    return { start: iv.startTime, stop: iv.endTime, type: v.exerciseType, name: v.displayName || "", dur: secs(v.activeDuration),
+    const fm = flat(m), fk = (re, not) => { const k = Object.keys(fm).find(k => re.test(k) && !(not && not.test(k)) && typeof fm[k] === "number"); return k ? fm[k] : null; };
+    return { laps: fk(/length|lap/i, /pool|millimet/i), pool: fk(/pool/i), hrMax: fk(/max.*heart|heart.*max/i), start: iv.startTime, stop: iv.endTime, type: v.exerciseType, name: v.displayName || "", dur: secs(v.activeDuration),
       kcal: N(m.caloriesKcal), km: N(m.distanceMillimeters) != null ? N(m.distanceMillimeters) / 1e6 : null, steps: N(m.steps), hr: N(m.averageHeartRateBeatsPerMinute),
       azm: N(m.activeZoneMinutes), pace: N(m.averagePaceSecondsPerMeter), elev: N(m.elevationGainMillimeters) != null ? N(m.elevationGainMillimeters) / 1000 : null,
       zones: [secs(z.lightTime), secs(z.moderateTime), secs(z.vigorousTime), secs(z.peakTime)] };

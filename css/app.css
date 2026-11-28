@@ -584,3 +584,7 @@ nav button.on{color:var(--c)}
 .wbf{flex:none;height:40px;padding:0 16px;border-radius:999px;background:var(--tintfill);color:var(--ontint);font-weight:600;font-size:15px}
 body.wlive main,body.wlive .screen{padding-bottom:calc(env(safe-area-inset-bottom,0px) + 150px)}
 @media (min-width:744px){.wbar{left:50%;right:auto;width:520px;transform:translateX(-50%)}}
+/* 4d-2 walking / swimming / running */
+.cdseg{margin:0 0 14px}
+.cdfoot{display:flex;justify-content:space-between;align-items:center;margin:0 2px 4px;color:var(--label2);font-size:15px}
+.cdpc{width:min(420px,100%);max-height:86vh;overflow:auto}.cdpc .tiles{width:100%;text-align:left}.cdpc .zbars{width:100%;text-align:left}

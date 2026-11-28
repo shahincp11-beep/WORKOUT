@@ -36,3 +36,7 @@
 - Mode button (S.mode gym/walk/swim/run) on the right of Start; walk/swim/run read HD.ex (full views in 4d-2).
 - Recent list → tap to correct date, time, sets, cardio, kg, reps, minutes or delete. Own exercises: S.custom[dayKey]=[[name,group,"Your own","3 × 10"]] (added to d.lib on load).
 - First renderAll() is at the end of gym.js.
+
+## Walking / Swimming / Running (Phase 4d-2)
+- `js/cardio.js` (loads before gym.js) – Activity segment S.aseg (today/walk/swim/run); reads HD.ex only (no manual tracking). Last session tiles (time, distance, pace, laps or steps, HR, kcal, zones), insight, 6-week charts (distance per week, pace, HR), session list → pop-up.
+- Laps: e.laps (server, from exercise metrics) or the day's swim lengths HD.days[d].swimL. Server also sends e.pool, e.hrMax.

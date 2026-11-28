@@ -328,7 +328,8 @@ function renderActivity(){
   const steps7=lastN("steps",7),sleep7=lastN("sleep",7),rhr30=lastN("rhr",30).map((p,i)=>({x:i,v:p.v})).filter(p=>p.v!=null);
   const n=HABITS.filter(h=>S.daily?.d===today()&&S.daily.h[h[0]]).length;
   if(!S.daily||S.daily.d!==today())S.daily={d:today(),h:{}};
-  $("actBody").innerHTML=`
+  if(S.aseg&&S.aseg!=="today"&&CDM[S.aseg]){$("actBody").innerHTML=cdSeg()+`<div class="sumfoot cdfoot"><span>Fitbit Air</span><span>${hdFoot()}</span></div>`+cdView(S.aseg);return;}
+  $("actBody").innerHTML=cdSeg()+`
   <section class="summary" aria-label="Today's activity">${rings([["Move",num(t.azm)||0,22,"ZONE MIN","--tint"],["Cardio",weekCardio(),150,"MIN","--ring2"],["Steps",num(t.steps)||0,10000,"STEPS","--orange"]])}<div class="sumfoot"><span>Fitbit Air</span><span>${hdFoot()||`<b>${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</b>`}</span></div></section>
   ${hdActivity()}
   <div class="group"><div class="cell" style="--inset:58px"><span class="itile" style="--ic:var(--label2)">${G.band}</span><span class="ct"><span class="t1">Fitbit Air</span><span class="t2">${latestD?`Last logged ${fmtD(latestD)}`:"Not logged yet"}</span></span><span class="st info">${HD.at?"Google":"Manual"}</span></div>

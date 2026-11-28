@@ -97,9 +97,9 @@ function gyBar(){let b=$("wbar");if(!gyLive()){b?.remove();document.body.classLi
 setInterval(()=>{if(document.hidden)return;if(S.started&&!S.started.p)for(const id of ["wbT","dsT","hsT"]){const t=$(id);if(t)t.textContent=gyClock(gyEl());}
   document.querySelectorAll("[data-xk]").forEach(x=>{x.textContent=gyClock(gxMs(S.gyT?.[x.dataset.xk]));});if(!!$("wbar")!==gyLive())gyBar();},1000);
 
-// mode button (right end of Start): Gym / Walking / Swimming / Running — walk, swim and run come from Fitbit (full views in 4d-2)
+// mode button (right end of Start): Gym / Walking / Swimming / Running — walk, swim and run come from Fitbit (views in js/cardio.js, 4d-2)
 const GMODES={gym:["Gym","Start Gym Mode",G.play],walk:["Walking","Start Walking",G.walk],swim:["Swimming","Start Swimming",'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 17c2 0 2-1.5 4-1.5S8 17 10 17s2-1.5 4-1.5 2 1.5 4 1.5 2-1.5 4-1.5M8 13l3-4 3 2 3-3"/><circle cx="17" cy="5" r="1.8"/></svg>'],run:["Running","Start Running",G.run]};
-const gyFit=m=>{const re={walk:/walk|hik/i,swim:/swim/i,run:/run/i}[m];return [...(HD?.ex||[])].filter(e=>re.test((e.type||"")+" "+(e.name||""))).sort((a,b)=>(a.start>b.start?1:-1)).pop();};
+const gyFit=m=>cdList(m)[0];
 function gyModeHTML(){const m=GMODES[S.mode]?S.mode:"gym",live=gyLive();let last="";
   if(m==="gym"){const x=[...S.sessions].reverse()[0],d=x&&dayByKey(x.k);last=d?`Last: ${dname(d)} · ${fmtD(x.d,{day:"numeric",month:"short"})}${x.mins?` · ${x.mins} min`:""}`:"No gym sessions yet";}
   else{const e=gyFit(m);last=e?`Last: ${fmtD(String(e.start).slice(0,10),{day:"numeric",month:"short"})} · ${Math.round((e.dur||0)/60)} min${e.km?` · ${r1(e.km)} km`:""}`:"No Fitbit sessions yet";}
@@ -145,7 +145,7 @@ document.addEventListener("click",ev=>{const b=ev.target.closest("button");
   if(!b)return;const ds=b.dataset;
   if(ds.gyhello){$("ghpop")?.remove();gymPick();return;}
   if(ds.gygo!=null){$("ghpop")?.remove();const r=gymReady();S.gyRd=r?{sc:r.sc,lv:r.lv}:null;const i=+ds.gygo;S.tab="workout";S.view=i;S.edit=false;gyStart(DAYS[i].key);renderAll();scrollTo({top:0});return;}
-  if(b.id==="gymStart"){const m=GMODES[S.mode]?S.mode:"gym";if(m!=="gym"){S.tab="activity";S.view=null;renderAll();scrollTo({top:0});toast(`Start ${GMODES[m][0].toLowerCase()} on your Fitbit · it shows here after sync`);return;}
+  if(b.id==="gymStart"){const m=GMODES[S.mode]?S.mode:"gym";if(m!=="gym"){S.tab="activity";S.aseg=m;S.view=null;renderAll();scrollTo({top:0});toast(`Start ${GMODES[m][0].toLowerCase()} on your Fitbit · it shows here after sync`);return;}
     if(gyLive()){S.view=gyDayI();renderAll();scrollTo({top:0});return;}gymPick();return;}
   if(b.id==="gyMode"){gyModeMenu();return;}
   if(ds.gymode){$("ghpop")?.remove();S.mode=ds.gymode;renderAll();return;}
